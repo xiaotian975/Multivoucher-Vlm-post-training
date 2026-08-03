@@ -1,0 +1,18 @@
+{
+  "merchant_templates": [
+    {
+      "canonical": "{city}{brand}{category}有限公司",
+      "aliases": ["{brand}{category}", "{city}{brand}", "{brand}"],
+      "categories": ["办公用品", "电子设备", "打印服务", "商务餐饮"]
+    },
+    {
+      "canonical": "{city}{brand}{category}有限公司",
+      "aliases": ["{brand}{category}", "{city}{brand}{category}", "{brand}"],
+      "categories": ["差旅交通", "住宿", "培训会议", "咨询服务"]
+    }
+  ],
+  "brands": [
+    "星河", "云帆", "启明", "远航", "华创", "瑞联", "金石", "蓝海", "天成", "博远",
+    "新程", "嘉禾", "明德", "汇智", "中科", "优选", "宏达", "信安", "智联", "万维"
+  ]
+}

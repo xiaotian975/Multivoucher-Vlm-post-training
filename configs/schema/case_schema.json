@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://multivoucher-audit.local/schema/case_schema.json",
+  "title": "MultiVoucher-Audit Case Schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "case_id",
+    "applicant",
+    "payer",
+    "order_user",
+    "merchant_canonical",
+    "invoice_merchant",
+    "payment_merchant",
+    "order_merchant",
+    "merchant_aliases",
+    "expense_type",
+    "invoice_amount",
+    "payment_amount",
+    "reimbursement_amount",
+    "order_amount",
+    "tax_amount",
+    "order_date",
+    "payment_date",
+    "invoice_date",
+    "application_date",
+    "invoice_id",
+    "order_id",
+    "payment_id",
+    "documents",
+    "primary_anomaly_type",
+    "anomaly_types",
+    "evidence_sufficient",
+    "risk_level",
+    "audit_result",
+    "metadata"
+  ],
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "pattern": "^MV_[A-Za-z0-9]+_[0-9]{6,}$"
+    },
+    "applicant": { "type": "string", "minLength": 1 },
+    "payer": { "type": "string", "minLength": 1 },
+    "order_user": { "type": "string", "minLength": 1 },
+    "merchant_canonical": { "type": "string", "minLength": 1 },
+    "invoice_merchant": { "type": "string", "minLength": 1 },
+    "payment_merchant": { "type": "string", "minLength": 1 },
+    "order_merchant": { "type": "string", "minLength": 1 },
+    "merchant_aliases": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "expense_type": { "type": "string", "minLength": 1 },
+    "invoice_amount": { "$ref": "#/$defs/money_string" },
+    "payment_amount": { "$ref": "#/$defs/money_string" },
+    "reimbursement_amount": { "$ref": "#/$defs/money_string" },
+    "order_amount": { "$ref": "#/$defs/money_string" },
+    "tax_amount": { "$ref": "#/$defs/money_string" },
+    "order_date": { "$ref": "#/$defs/date_string" },
+    "payment_date": { "$ref": "#/$defs/date_string" },
+    "invoice_date": { "$ref": "#/$defs/date_string" },
+    "application_date": { "$ref": "#/$defs/date_string" },
+    "invoice_id": {
+      "type": "string",
+      "pattern": "^INV[0-9]{8}[0-9]{6}$"
+    },
+    "order_id": {
+      "type": "string",
+      "pattern": "^ORD[0-9]{8}[0-9]{6}$"
+    },
+    "payment_id": {
+      "type": "string",
+      "pattern": "^PAY[0-9]{8}[0-9]{6}$"
+    },
+    "documents": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["invoice", "payment", "reimbursement_form", "order"]
+      },
+      "uniqueItems": true,
+      "minItems": 1,
+      "maxItems": 4
+    },
+    "primary_anomaly_type": {
+      "type": "string",
+      "enum": [
+        "none",
+        "amount_mismatch",
+        "over_reimbursement",
+        "date_mismatch",
+        "merchant_mismatch",
+        "applicant_mismatch",
+        "order_id_mismatch",
+        "missing_document",
+        "duplicate_in_batch",
+        "unreadable_image"
+      ]
+    },
+    "anomaly_types": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "amount_mismatch",
+          "over_reimbursement",
+          "date_mismatch",
+          "merchant_mismatch",
+          "applicant_mismatch",
+          "order_id_mismatch",
+          "missing_document",
+          "duplicate_in_batch",
+          "unreadable_image"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "evidence_sufficient": { "type": "boolean" },
+    "risk_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high"]
+    },
+    "audit_result": {
+      "type": "string",
+      "enum": ["pass", "manual_review", "missing_info", "reject_recommendation"]
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["split_name", "source", "template_group", "seed"],
+      "properties": {
+        "split_name": { "type": "string", "minLength": 1 },
+        "source": { "type": "string", "minLength": 1 },
+        "template_group": {
+          "type": "string",
+          "enum": ["train", "val", "standard_test", "strong_generalization_test"]
+        },
+        "seed": { "type": "integer" },
+        "city": { "type": "string" },
+        "merchant_category": { "type": "string" }
+      }
+    }
+  },
+  "$defs": {
+    "money_string": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]{2}$"
+    },
+    "date_string": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    }
+  }
+}

@@ -1,0 +1,37 @@
+seed: 42
+train_cases: 30000
+val_in_template_cases: 2000
+val_unseen_template_cases: 1000
+test_clean_cases: 2000
+test_robust_cases: 2000
+test_unseen_template_cases: 2000
+test_hard_negative_cases: 2000
+
+anomaly_distribution:
+  none: 0.30
+  amount_mismatch: 0.12
+  over_reimbursement: 0.08
+  date_mismatch: 0.08
+  merchant_mismatch: 0.08
+  applicant_mismatch: 0.08
+  order_id_mismatch: 0.08
+  missing_document: 0.08
+  duplicate_in_batch: 0.05
+  unreadable_image: 0.05
+
+base_case:
+  start_date: "2026-01-01"
+  end_date: "2026-07-31"
+  default_documents:
+    - invoice
+    - payment
+    - reimbursement_form
+    - order
+  tax_rate: 0.06
+  id_prefix: MV_MAIN
+
+dictionaries:
+  names: data/mv_audit/dictionaries/names.json
+  merchants: data/mv_audit/dictionaries/merchants.json
+  expense_types: data/mv_audit/dictionaries/expense_types.json
+  cities: data/mv_audit/dictionaries/cities.json

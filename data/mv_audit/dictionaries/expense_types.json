@@ -1,0 +1,10 @@
+[
+  { "name": "办公用品", "min_amount": 50, "max_amount": 3000 },
+  { "name": "差旅交通", "min_amount": 20, "max_amount": 5000 },
+  { "name": "住宿", "min_amount": 200, "max_amount": 3000 },
+  { "name": "培训会议", "min_amount": 500, "max_amount": 10000 },
+  { "name": "电子设备", "min_amount": 300, "max_amount": 12000 },
+  { "name": "打印服务", "min_amount": 30, "max_amount": 2000 },
+  { "name": "商务餐饮", "min_amount": 80, "max_amount": 5000 },
+  { "name": "咨询服务", "min_amount": 1000, "max_amount": 20000 }
+]
