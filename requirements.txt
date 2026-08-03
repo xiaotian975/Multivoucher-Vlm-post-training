@@ -1,0 +1,16 @@
+torch
+transformers
+accelerate
+peft
+trl
+deepspeed
+qwen-vl-utils
+pillow
+opencv-python
+numpy
+pandas
+scikit-learn
+jsonschema
+pyyaml
+tqdm
+matplotlib
