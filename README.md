@@ -1,5 +1,7 @@
 # MultiVoucher-Audit
 
+面向企业费用报销一致性的 VLM 后训练项目。
+
 MultiVoucher-Audit is a post-training research project for multi-image enterprise reimbursement audit with `Qwen3-VL-8B-Instruct`.
 
 The project is not a single-invoice OCR demo. It targets a full audit case containing invoice, payment screenshot, reimbursement form, and order screenshot images. The model is expected to extract fields, compare information across images, identify anomalies, predict risk, produce an audit recommendation, and ground the decision in Evidence-Grounded JSON with value and bbox evidence.
