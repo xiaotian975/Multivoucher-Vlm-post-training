@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://multivoucher-audit.local/schema/output_schema.json",
+  "title": "MultiVoucher-Audit Evidence-Grounded Model Output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "case_id",
+    "field_extraction",
+    "consistency_check",
+    "anomaly_types",
+    "risk_level",
+    "audit_result",
+    "reason",
+    "evidence",
+    "uncertainty"
+  ],
+  "properties": {
+    "case_id": { "type": "string", "minLength": 1 },
+    "field_extraction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "invoice_amount",
+        "payment_amount",
+        "reimbursement_amount",
+        "order_amount",
+        "tax_amount",
+        "invoice_merchant",
+        "payment_merchant",
+        "order_merchant",
+        "merchant",
+        "applicant",
+        "payer",
+        "order_user",
+        "invoice_date",
+        "payment_date",
+        "order_date",
+        "application_date",
+        "invoice_id",
+        "order_id",
+        "payment_id",
+        "expense_type"
+      ],
+      "properties": {
+        "invoice_amount": { "$ref": "#/$defs/nullable_string" },
+        "payment_amount": { "$ref": "#/$defs/nullable_string" },
+        "reimbursement_amount": { "$ref": "#/$defs/nullable_string" },
+        "order_amount": { "$ref": "#/$defs/nullable_string" },
+        "tax_amount": { "$ref": "#/$defs/nullable_string" },
+        "invoice_merchant": { "$ref": "#/$defs/nullable_string" },
+        "payment_merchant": { "$ref": "#/$defs/nullable_string" },
+        "order_merchant": { "$ref": "#/$defs/nullable_string" },
+        "merchant": { "$ref": "#/$defs/nullable_string" },
+        "applicant": { "$ref": "#/$defs/nullable_string" },
+        "payer": { "$ref": "#/$defs/nullable_string" },
+        "order_user": { "$ref": "#/$defs/nullable_string" },
+        "invoice_date": { "$ref": "#/$defs/nullable_string" },
+        "payment_date": { "$ref": "#/$defs/nullable_string" },
+        "order_date": { "$ref": "#/$defs/nullable_string" },
+        "application_date": { "$ref": "#/$defs/nullable_string" },
+        "invoice_id": { "$ref": "#/$defs/nullable_string" },
+        "order_id": { "$ref": "#/$defs/nullable_string" },
+        "payment_id": { "$ref": "#/$defs/nullable_string" },
+        "expense_type": { "$ref": "#/$defs/nullable_string" }
+      }
+    },
+    "consistency_check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "amount_consistent",
+        "merchant_consistent",
+        "person_consistent",
+        "date_reasonable",
+        "order_id_consistent",
+        "payment_id_present",
+        "document_complete",
+        "duplicate_in_batch"
+      ],
+      "properties": {
+        "amount_consistent": { "type": "boolean" },
+        "merchant_consistent": { "type": "boolean" },
+        "person_consistent": { "type": "boolean" },
+        "date_reasonable": { "type": "boolean" },
+        "order_id_consistent": { "type": "boolean" },
+        "payment_id_present": { "type": "boolean" },
+        "document_complete": { "type": "boolean" },
+        "duplicate_in_batch": { "type": "boolean" }
+      }
+    },
+    "anomaly_types": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/anomaly_type" },
+      "uniqueItems": true
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high"]
+    },
+    "audit_result": {
+      "type": "string",
+      "enum": ["pass", "manual_review", "missing_info", "reject_recommendation"]
+    },
+    "reason": { "type": "string", "minLength": 1 },
+    "evidence": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/evidence_item" }
+    },
+    "uncertainty": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["has_uncertain_fields", "uncertain_fields", "requires_manual_review"],
+      "properties": {
+        "has_uncertain_fields": { "type": "boolean" },
+        "uncertain_fields": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "requires_manual_review": { "type": "boolean" }
+      }
+    }
+  },
+  "$defs": {
+    "nullable_string": {
+      "anyOf": [
+        { "type": "string" },
+        { "type": "null" }
+      ]
+    },
+    "anomaly_type": {
+      "type": "string",
+      "enum": [
+        "amount_mismatch",
+        "over_reimbursement",
+        "date_mismatch",
+        "merchant_mismatch",
+        "applicant_mismatch",
+        "order_id_mismatch",
+        "missing_document",
+        "duplicate_in_batch",
+        "unreadable_image"
+      ]
+    },
+    "bbox": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1000
+      }
+    },
+    "evidence_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_image_id",
+        "source_doc_type",
+        "field",
+        "value",
+        "bbox",
+        "evidence_text"
+      ],
+      "properties": {
+        "source_image_id": { "type": "string", "minLength": 1 },
+        "source_doc_type": {
+          "type": "string",
+          "enum": ["invoice", "payment", "reimbursement_form", "order"]
+        },
+        "field": { "type": "string", "minLength": 1 },
+        "value": { "type": "string" },
+        "bbox": { "$ref": "#/$defs/bbox" },
+        "evidence_text": { "type": "string" }
+      }
+    }
+  },
+  "not": {
+    "anyOf": [
+      { "required": ["primary_anomaly_type"] },
+      { "required": ["evidence_sufficient"] }
+    ]
+  }
+}

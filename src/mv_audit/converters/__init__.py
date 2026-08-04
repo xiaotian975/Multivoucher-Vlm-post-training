@@ -1,4 +1,1 @@
-"""Training data converters.
-
-TODO(phase 05): Add SFT, DPO, and GRPO data builders.
-"""
+"""Training-format converters for MultiVoucher-Audit phase 05."""
