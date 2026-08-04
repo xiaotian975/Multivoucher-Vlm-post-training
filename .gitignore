@@ -41,6 +41,11 @@ data/mv_audit/annotations/**
 data/mv_audit/sft/**
 data/mv_audit/dpo/**
 data/mv_audit/grpo/**
+data/mv_audit/images_main/**
+data/mv_audit/annotations_main/**
+data/mv_audit/sft_main/**
+data/mv_audit/dpo_main/**
+data/mv_audit/grpo_main/**
 data/mv_audit/eval_sets/**
 outputs/**
 
