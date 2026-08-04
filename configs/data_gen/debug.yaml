@@ -1,11 +1,11 @@
 seed: 42
-train_cases: 2000
-val_in_template_cases: 200
-val_unseen_template_cases: 100
-test_clean_cases: 200
-test_robust_cases: 200
-test_unseen_template_cases: 200
-test_hard_negative_cases: 200
+train_cases: 6500
+val_in_template_cases: 650
+val_unseen_template_cases: 350
+test_clean_cases: 625
+test_robust_cases: 625
+test_unseen_template_cases: 625
+test_hard_negative_cases: 625
 
 anomaly_distribution:
   none: 0.30

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -53,6 +54,7 @@ def resolve_font_path(font_path: str | None = None) -> str | None:
     return None
 
 
+@lru_cache(maxsize=32)
 def load_font(size: int, *, font_path: str | None = None) -> ImageFont.ImageFont:
     """Load a TrueType font with fallback to PIL's default bitmap font."""
 
