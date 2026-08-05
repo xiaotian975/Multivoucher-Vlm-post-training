@@ -1,0 +1,7 @@
+data/mv_audit/raw_cases/main/** filter=lfs diff=lfs merge=lfs -text
+data/mv_audit/images_main/** filter=lfs diff=lfs merge=lfs -text
+data/mv_audit/annotations_main/** filter=lfs diff=lfs merge=lfs -text
+data/mv_audit/sft_main/** filter=lfs diff=lfs merge=lfs -text
+data/mv_audit/dpo_main/** filter=lfs diff=lfs merge=lfs -text
+data/mv_audit/grpo_main/** filter=lfs diff=lfs merge=lfs -text
+outputs/eval_reports/figures/bbox_samples_main/** filter=lfs diff=lfs merge=lfs -text

@@ -1,0 +1,27 @@
+seed: 42
+
+model:
+  model_name_or_path: Qwen/Qwen3-VL-8B-Instruct
+  local_model_dir: models/Qwen3-VL-8B-Instruct
+  dpo_checkpoint_dir: outputs/checkpoints/dpo/qwen3vl_8b_dpo
+  dtype: auto
+  device_map: auto
+  trust_remote_code: true
+
+data:
+  train_file: data/mv_audit/grpo_main/prompts_train.jsonl
+  output_schema: configs/schema/output_schema.json
+
+training:
+  output_dir: outputs/checkpoints/grpo/qwen3vl_8b_grpo
+  learning_rate: 1.0e-6
+  num_train_epochs: 1
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 16
+  num_generations: 4
+  max_completion_length: 1536
+  bf16: true
+  logging_steps: 10
+  save_steps: 500
+  save_total_limit: 2
+  report_to: []
