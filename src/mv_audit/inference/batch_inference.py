@@ -40,6 +40,29 @@ def _annotation_file_name(split: str) -> str:
     return f"field_bboxes_{split}.jsonl"
 
 
+def _sample_manifest_path(config: dict[str, Any], split: str) -> Path | None:
+    inference_config = _section(config, "inference")
+    manifest_dir = inference_config.get("sample_manifest_dir")
+    if not manifest_dir:
+        return None
+    return Path(str(manifest_dir)) / f"{split}_case_ids.jsonl"
+
+
+def _sample_case_ids(config: dict[str, Any], split: str) -> list[str] | None:
+    manifest_path = _sample_manifest_path(config, split)
+    if manifest_path is None:
+        return None
+    ids: list[str] = []
+    for row in iter_jsonl(manifest_path):
+        case_id = row.get("case_id")
+        if not case_id:
+            raise ValueError(f"Missing case_id in sample manifest row: {manifest_path}")
+        ids.append(str(case_id))
+    if not ids:
+        raise ValueError(f"Sample manifest is empty: {manifest_path}")
+    return ids
+
+
 def _read_few_shot_examples(train_file: str | Path, *, count: int, seed: int) -> list[dict[str, str]]:
     if count <= 0:
         return []
@@ -91,6 +114,13 @@ def build_eval_rows(
     cases_path = raw_cases_dir / _split_file_name(split)
     annotations_path = annotations_dir / _annotation_file_name(split)
     cases = read_jsonl(cases_path)
+    sample_ids = _sample_case_ids(config, split)
+    if sample_ids is not None:
+        cases_by_id = {str(case["case_id"]): case for case in cases}
+        missing_ids = [case_id for case_id in sample_ids if case_id not in cases_by_id]
+        if missing_ids:
+            raise ValueError(f"Sample manifest references missing cases for {split}: {missing_ids[:5]}")
+        cases = [cases_by_id[case_id] for case_id in sample_ids]
     if limit is not None:
         cases = cases[:limit]
     records_by_case = group_records_by_case(read_jsonl(annotations_path))
@@ -129,14 +159,21 @@ def build_eval_rows(
     return rows
 
 
-def _messages_for_row(row: dict[str, Any]) -> list[dict[str, Any]]:
-    content: list[dict[str, str]] = []
+def _messages_for_row(row: dict[str, Any], inference_config: dict[str, Any]) -> list[dict[str, Any]]:
+    content: list[dict[str, Any]] = []
+    image_max_pixels = inference_config.get("image_max_pixels")
+    image_min_pixels = inference_config.get("image_min_pixels")
     for item in row["images"]:
         image_id = str(item.get("image_id") or "")
         doc_type = str(item.get("doc_type") or "")
         image_path = Path(str(item["image_path"])).resolve()
         content.append({"type": "text", "text": f"{image_id}: {doc_type}"})
-        content.append({"type": "image", "image": image_to_message_uri(image_path)})
+        image_payload: dict[str, Any] = {"type": "image", "image": image_to_message_uri(image_path)}
+        if image_max_pixels is not None:
+            image_payload["max_pixels"] = int(image_max_pixels)
+        if image_min_pixels is not None:
+            image_payload["min_pixels"] = int(image_min_pixels)
+        content.append(image_payload)
     content.append({"type": "text", "text": str(row["prompt"])})
     return [{"role": "user", "content": content}]
 
@@ -149,6 +186,24 @@ def _prediction_path(config: dict[str, Any], *, model_id: str, split: str) -> Pa
 def _ground_truth_path(config: dict[str, Any], *, split: str) -> Path:
     output_dir = Path(str(_section(config, "inference").get("ground_truth_dir", "data/mv_audit/eval_sets_main")))
     return output_dir / f"{split}.jsonl"
+
+
+def _ordered_predictions(
+    rows: list[dict[str, Any]],
+    predictions_by_case: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    return [predictions_by_case[row["case_id"]] for row in rows if row["case_id"] in predictions_by_case]
+
+
+def _existing_predictions(path: Path) -> dict[str, dict[str, Any]]:
+    if not path.exists():
+        return {}
+    predictions: dict[str, dict[str, Any]] = {}
+    for row in iter_jsonl(path):
+        case_id = row.get("case_id")
+        if case_id:
+            predictions[str(case_id)] = row
+    return predictions
 
 
 def _dry_run(config: dict[str, Any], *, model_id: str, split: str, limit: int | None) -> None:
@@ -186,7 +241,7 @@ def _load_model_for_inference(config: dict[str, Any], *, model_id: str):
     return model, processor, model_path
 
 
-def run_inference(config: dict[str, Any], *, model_id: str, split: str, limit: int | None) -> None:
+def run_inference(config: dict[str, Any], *, model_id: str, split: str, limit: int | None, resume: bool) -> None:
     if model_id not in MODEL_IDS:
         raise ValueError(f"Unsupported model_id {model_id!r}. Expected one of {sorted(MODEL_IDS)}.")
     rows = build_eval_rows(config=config, split=split, model_id=model_id, limit=limit)
@@ -196,11 +251,24 @@ def run_inference(config: dict[str, Any], *, model_id: str, split: str, limit: i
     ensure_dir(ground_truth_path.parent)
     write_jsonl(rows, ground_truth_path)
 
+    predictions_by_case = _existing_predictions(prediction_path) if resume else {}
+    pending_rows = [row for row in rows if row["case_id"] not in predictions_by_case]
+    if not pending_rows:
+        write_jsonl(_ordered_predictions(rows, predictions_by_case), prediction_path)
+        print(f"predictions={len(predictions_by_case)}")
+        print(f"skipped_existing={len(rows)}")
+        print(f"prediction_output={prediction_path}")
+        print(f"ground_truth_output={ground_truth_path}")
+        return
+
     model, processor, model_path = _load_model_for_inference(config, model_id=model_id)
     inference_config = _section(config, "inference")
-    predictions: list[dict[str, Any]] = []
-    for row in rows:
-        messages = _messages_for_row(row)
+    new_predictions = 0
+    total_rows = len(rows)
+    skipped_existing = len(rows) - len(pending_rows)
+    flush_every = int(inference_config.get("flush_every", 20))
+    for row in pending_rows:
+        messages = _messages_for_row(row, inference_config)
         inputs = process_messages(processor, messages)
         inputs = move_inputs_to_model(inputs, model)
         started = time.perf_counter()
@@ -212,21 +280,38 @@ def run_inference(config: dict[str, Any], *, model_id: str, split: str, limit: i
             temperature=float(inference_config.get("temperature", 0.0)),
             top_p=float(inference_config.get("top_p", 0.9)),
         )
-        predictions.append(
-            {
-                "case_id": row["case_id"],
-                "model_id": model_id,
-                "split": split,
-                "images": row["images"],
-                "raw_output": raw_output,
-                "elapsed_seconds": time.perf_counter() - started,
-                "model_path": model_path,
-            }
+        predictions_by_case[row["case_id"]] = {
+            "case_id": row["case_id"],
+            "model_id": model_id,
+            "split": split,
+            "images": row["images"],
+            "raw_output": raw_output,
+            "elapsed_seconds": time.perf_counter() - started,
+            "model_path": model_path,
+        }
+        new_predictions += 1
+        completed = skipped_existing + new_predictions
+        print(
+            json.dumps(
+                {
+                    "event": "prediction_complete",
+                    "model_id": model_id,
+                    "split": split,
+                    "case_id": row["case_id"],
+                    "completed": completed,
+                    "total": total_rows,
+                    "elapsed_seconds": round(predictions_by_case[row["case_id"]]["elapsed_seconds"], 3),
+                },
+                ensure_ascii=False,
+            ),
+            flush=True,
         )
-        if len(predictions) % int(inference_config.get("flush_every", 20)) == 0:
-            write_jsonl(predictions, prediction_path)
-    write_jsonl(predictions, prediction_path)
-    print(f"predictions={len(predictions)}")
+        if new_predictions % flush_every == 0:
+            write_jsonl(_ordered_predictions(rows, predictions_by_case), prediction_path)
+    write_jsonl(_ordered_predictions(rows, predictions_by_case), prediction_path)
+    print(f"predictions={len(predictions_by_case)}")
+    print(f"new_predictions={new_predictions}")
+    print(f"skipped_existing={len(rows) - len(pending_rows)}")
     print(f"prediction_output={prediction_path}")
     print(f"ground_truth_output={ground_truth_path}")
 
@@ -237,6 +322,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model_id", required=True, choices=sorted(MODEL_IDS))
     parser.add_argument("--split", required=True, choices=sorted(TEST_SPLITS))
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument("--resume", action="store_true")
     parser.add_argument("--dry_run", action="store_true")
     return parser.parse_args()
 
@@ -247,7 +333,7 @@ def main() -> None:
     if args.dry_run:
         _dry_run(config, model_id=args.model_id, split=args.split, limit=args.limit)
         return
-    run_inference(config, model_id=args.model_id, split=args.split, limit=args.limit)
+    run_inference(config, model_id=args.model_id, split=args.split, limit=args.limit, resume=args.resume)
 
 
 if __name__ == "__main__":

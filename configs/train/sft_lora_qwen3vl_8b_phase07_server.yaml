@@ -1,0 +1,55 @@
+model:
+  model_name_or_path: Qwen/Qwen3-VL-8B-Instruct
+  local_model_dir: models/Qwen3-VL-8B-Instruct
+  dtype: auto
+  device_map: auto
+  trust_remote_code: true
+
+data:
+  train_file: data/mv_audit/sft_main/train_existing_images.jsonl
+  val_file: data/mv_audit/sft_main/val_existing_images.jsonl
+  raw_cases_dir: data/mv_audit/raw_cases/main
+  annotations_dir: data/mv_audit/annotations_main
+  output_schema: configs/schema/output_schema.json
+
+training:
+  output_dir: outputs/checkpoints/sft/qwen3vl_8b_lora_existing_epoch1
+  learning_rate: 1.0e-4
+  num_train_epochs: 1
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
+  gradient_accumulation_steps: 16
+  bf16: true
+  fp16: false
+  gradient_checkpointing: true
+  logging_steps: 10
+  save_steps: 500
+  eval_steps: 500
+  eval_strategy: steps
+  save_strategy: steps
+  save_total_limit: 2
+  report_to: []
+
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.05
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+
+inference:
+  predictions_dir: outputs/predictions
+  ground_truth_dir: data/mv_audit/eval_sets_main
+  sft_adapter_dir: outputs/checkpoints/sft/qwen3vl_8b_lora_existing_epoch1
+  few_shot_count: 2
+  max_new_tokens: 1024
+  temperature: 0.0
+  top_p: 0.9
+  image_max_pixels: 262144
+  flush_every: 1
