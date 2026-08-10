@@ -183,3 +183,42 @@ python -m mv_audit.inference.qwen3vl_multi_image_test \
 - 实现小规模 GRPO 和 rule-based reward，强化高风险不放行、证据正确、JSON 合法和不确定转人工。
 - 形成 M2/M3/M4 指标对比、错误样本分析和最终实验报告。
 
+## 实验进展补充（2026-08-10）
+
+本节记录服务器侧已经完成的 SFT 训练摘要。这里的结论只覆盖 LoRA-SFT 的训练过程、checkpoint 和验证集 loss，不等同于 Phase 07 的最终业务指标评测；JSON Validity、Schema Compliance、Audit Accuracy、High-risk Miss Rate、Evidence Support Rate 等指标仍以后续 `phase07_sample500` 评测报告为准。
+
+### SFT 训练摘要
+
+- 基座模型：`Qwen3-VL-8B-Instruct`。
+- 训练配置：`configs/train/sft_lora_qwen3vl_8b_phase07_server.yaml`。
+- SFT adapter：`outputs/checkpoints/sft/qwen3vl_8b_lora_existing_epoch1/`。
+- 训练数据：`data/mv_audit/sft_main/train_existing_images.jsonl`，`21682` 条。
+- 验证数据：`data/mv_audit/sft_main/val_existing_images.jsonl`，`1138` 条。
+- 本次使用的是 existing-images 子集，因此样本数少于早期规划中的完整 main 规模。
+
+### 核心训练参数
+
+- `num_train_epochs=1`
+- `learning_rate=1e-4`
+- `per_device_train_batch_size=1`
+- `gradient_accumulation_steps=16`
+- `bf16=true`
+- `gradient_checkpointing=true`
+- LoRA：`r=16`、`alpha=32`、`dropout=0.05`
+- LoRA target modules：`q_proj`、`k_proj`、`v_proj`、`o_proj`、`gate_proj`、`up_proj`、`down_proj`
+
+### 训练与验证结果
+
+- 最终训练步数：`global_step=1356`。
+- 最终 epoch：`1.0`。
+- 训练耗时：`67437.9456s`，约 `18.73h`。
+- 最终 `train_loss=0.004982630206586825`。
+- 验证记录 1：`eval_loss=0.00028587671113200486`，`epoch=0.37`。
+- 验证记录 2：`eval_loss=0.00010228458268102258`，`epoch=0.74`。
+- checkpoint：`checkpoint-1000`、`checkpoint-1356` 和最终 adapter 均已生成。
+
+### 当前解释口径
+
+- SFT 已完成训练，并且在验证集上做过 loss eval。
+- Phase 07 的 `M0/M1/M2` 抽样推理和业务指标评测仍在独立的 `phase07_sample500` 输出目录中推进。
+- 当前不记录 DPO/GRPO 结果；这部分属于 Phase 08，需等 Phase 07 的 SFT 输出稳定性和业务指标确认后再推进。
