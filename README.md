@@ -341,3 +341,30 @@ M3 核心结果如下：
 - M3 sample500 推理评测：已完成。
 - GRPO/M4：未正式完成。服务器上仅存在 `examples=1/global_step=1` 的 GRPO smoke 级别产物，不作为正式 M4 结果写入。
 - Phase 08 整体：未完全验收完成；若下一步是 DPO/GRPO 调整分析，依赖已满足；若要进入最终实验报告或最终 demo，还需要正式 GRPO、M4 sample500 和 M2/M3/M4 对比。
+
+## Phase 08 DPO 诊断与优化方向（2026-08-11）
+
+基于 M2/M3 sample500 对比，当前 DPO 结果应视为 negative result，而不是可直接进入 GRPO 的成功结果。完整诊断见 [Phase 08 DPO 诊断与优化方案](docs/experiments/phase08_dpo_diagnosis/phase08_dpo_diagnosis_report.md)。
+
+核心判断：
+
+- DPO 训练过程收敛，但业务指标不符合预期。
+- M3 相比 M2 的平均 Audit Accuracy 从 `0.773` 降到 `0.668`。
+- High-risk Miss Rate 只从 `0.243` 小幅降到 `0.237`，改善不足。
+- Evidence Support Rate 从 `0.804` 小幅降到 `0.799`。
+- error cases 平均从 `164.5` 增到 `211.0`。
+- 错误迁移统计显示：`M2 correct -> M3 wrong` 为 `288` 个，`M2 wrong -> M3 correct` 为 `102` 个，净增错误 `186` 个。
+
+主要问题：
+
+- `audit_mismatch` 在 M3 中大幅增加，四个 split 合计比 M2 多 `197` 次。
+- DPO 略微减少 `high_risk_miss`，但只减少 `21` 次，收益不足以抵消审计决策错误增加。
+- 新增错误主要集中在高风险 `reject_recommendation` 样本，尤其是 `amount_mismatch`、`over_reimbursement` 和 `order_id_mismatch`。
+
+后续方向：
+
+- 暂停 GRPO，不扩大当前 GRPO smoke 产物。
+- 只从 Train 重构 DPO pairs，不从 Val/Test 反向调参。
+- 增加 hard rejected 和保护型 pairs，重点保护 M2 已经做对的高风险拒绝样本。
+- 降低 DPO 训练强度，尝试更小 learning rate、更少 step、更低 beta 或 early stopping。
+- 新 DPO 版本必须同时守住 Audit Accuracy 和 High-risk Miss Rate；否则应把 Phase08 结论写成 DPO negative result / reward-data mismatch。

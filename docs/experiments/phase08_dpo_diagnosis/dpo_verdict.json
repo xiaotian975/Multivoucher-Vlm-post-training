@@ -1,0 +1,14 @@
+{
+  "m2_audit_accuracy": 0.7735,
+  "m3_audit_accuracy": 0.6685,
+  "m2_high_risk_miss_rate": 0.2426641881460555,
+  "m3_high_risk_miss_rate": 0.23729393190423043,
+  "m2_evidence_support_rate": 0.8035245025336795,
+  "m3_evidence_support_rate": 0.7987088122605364,
+  "m2_error_cases": 164.5,
+  "m3_error_cases": 211.0,
+  "delta_audit_accuracy": -0.10499999999999998,
+  "delta_high_risk_miss_rate": -0.005370256241825078,
+  "delta_evidence_support_rate": -0.004815690273143103,
+  "delta_error_cases": 46.5
+}

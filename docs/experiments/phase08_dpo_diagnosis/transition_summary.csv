@@ -1,0 +1,17 @@
+split,transition,case_count
+test_clean,m2_correct_to_m3_wrong,65
+test_clean,m2_wrong_to_m3_correct,11
+test_clean,both_wrong,162
+test_clean,both_correct,262
+test_robust,m2_correct_to_m3_wrong,57
+test_robust,m2_wrong_to_m3_correct,30
+test_robust,both_wrong,146
+test_robust,both_correct,267
+test_unseen_template,m2_correct_to_m3_wrong,76
+test_unseen_template,m2_wrong_to_m3_correct,21
+test_unseen_template,both_wrong,155
+test_unseen_template,both_correct,248
+test_hard_negative,m2_correct_to_m3_wrong,90
+test_hard_negative,m2_wrong_to_m3_correct,40
+test_hard_negative,both_wrong,93
+test_hard_negative,both_correct,277

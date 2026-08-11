@@ -1,0 +1,63 @@
+{
+  "experiment": "phase08_dpo_diagnosis",
+  "collected_at_utc": "2026-08-11T12:24:42.740878+00:00",
+  "source_artifacts": [
+    "docs/experiments/phase07_sample500/error_cases/m2_sft_*_errors.jsonl",
+    "docs/experiments/phase08_m3_sample500/error_cases/m3_dpo_*_errors.jsonl",
+    "docs/experiments/phase07_sample500/metrics_summary.csv",
+    "docs/experiments/phase08_m3_sample500/metrics_summary.csv",
+    "server data/mv_audit/eval_sets_phase07_sample500/*.jsonl used only as temporary labels"
+  ],
+  "excluded_from_git": [
+    "sample500 ground truth temp copies",
+    "full predictions",
+    "checkpoints"
+  ],
+  "files": [
+    {
+      "path": "dpo_failure_analysis.csv",
+      "size_bytes": 59294,
+      "sha256": "4e1c78d8d8d194a2121c312eb472a7e1b5b946cb122870d3d741f1d0954f7cc6"
+    },
+    {
+      "path": "dpo_verdict.json",
+      "size_bytes": 517,
+      "sha256": "c2331c8c0298c10e4ca76ae11e107e947d844555bc068f279a93f6fe3173bfa3"
+    },
+    {
+      "path": "failure_by_type.csv",
+      "size_bytes": 10675,
+      "sha256": "6ffb6df541983b1b3963e37f44c2cb7d4915ab93299f57d55e3a298610f9fe58"
+    },
+    {
+      "path": "figures/dpo_transition_counts.png",
+      "size_bytes": 65154,
+      "sha256": "f24c7e9b05a2a1ccde7c7604e3e7fdea15c1e416dd4083ed8bea3355c3647e90"
+    },
+    {
+      "path": "figures/issue_count_shift.png",
+      "size_bytes": 99082,
+      "sha256": "f3ae6e4e4f83a3fb547ee44e423fb5353d472e565c5882147a7691ee20c570d5"
+    },
+    {
+      "path": "figures/m3_minus_m2_metric_delta.png",
+      "size_bytes": 60164,
+      "sha256": "0f2853ce6345a8d4cfaa66a7ef46b551b123c5407b302f7f67f5d2ef4ad88c01"
+    },
+    {
+      "path": "issue_delta_summary.csv",
+      "size_bytes": 1154,
+      "sha256": "526213c456d96a19d596268f92355736977588796279121ea33ac7d3fd96079a"
+    },
+    {
+      "path": "phase08_dpo_diagnosis_report.md",
+      "size_bytes": 4545,
+      "sha256": "6226cd3dcfbf257ff8e70b5ef325a9d72862448f220affc334cedafc73a0709d"
+    },
+    {
+      "path": "transition_summary.csv",
+      "size_bytes": 632,
+      "sha256": "d51b66c80863cb486a28a86576430f746bf51ca1b748729e03d5b2b2f5b901e3"
+    }
+  ]
+}
