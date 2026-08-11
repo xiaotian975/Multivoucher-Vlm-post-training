@@ -40,6 +40,7 @@ data/mv_audit/raw_cases/**
 data/mv_audit/annotations/**
 data/mv_audit/sft/**
 data/mv_audit/dpo/**
+data/mv_audit/dpo_v2/**
 data/mv_audit/grpo/**
 data/mv_audit/images_main/**
 data/mv_audit/annotations_main/**

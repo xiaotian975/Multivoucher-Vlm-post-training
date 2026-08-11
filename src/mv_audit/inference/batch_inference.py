@@ -20,8 +20,8 @@ from mv_audit.inference.qwen3vl_common import (
 from mv_audit.utils import ensure_dir, iter_jsonl, load_config, read_jsonl, write_jsonl
 
 
-MODEL_IDS = {"m0_zero_shot", "m1_few_shot", "m2_sft", "m3_dpo"}
-TEST_SPLITS = {"test_clean", "test_robust", "test_unseen_template", "test_hard_negative"}
+MODEL_IDS = {"m0_zero_shot", "m1_few_shot", "m2_sft", "m3_dpo", "m3v2_dpo"}
+TEST_SPLITS = {"test_clean", "test_robust", "test_unseen_template", "test_hard_negative", "train_decode_dev"}
 DEFAULT_CONFIG = "configs/train/sft_lora_qwen3vl_8b.yaml"
 
 
@@ -108,6 +108,20 @@ def build_eval_rows(
         raise ValueError(f"Unsupported split {split!r}. Expected one of {sorted(TEST_SPLITS)}.")
     data_config = _section(config, "data")
     inference_config = _section(config, "inference")
+    if split == "train_decode_dev":
+        decode_dev_file = data_config.get("decode_dev_file") or inference_config.get("train_decode_dev_file")
+        if not decode_dev_file:
+            raise ValueError("data.decode_dev_file or inference.train_decode_dev_file is required for train_decode_dev.")
+        rows = read_jsonl(decode_dev_file)
+        if limit is not None:
+            rows = rows[:limit]
+        normalized_rows: list[dict[str, Any]] = []
+        for row in rows:
+            normalized = dict(row)
+            normalized["split"] = "train_decode_dev"
+            normalized["model_id"] = model_id
+            normalized_rows.append(normalized)
+        return normalized_rows
 
     raw_cases_dir = Path(str(data_config.get("raw_cases_dir", "data/mv_audit/raw_cases/main")))
     annotations_dir = Path(str(data_config.get("annotations_dir", "data/mv_audit/annotations_main")))
@@ -184,7 +198,11 @@ def _prediction_path(config: dict[str, Any], *, model_id: str, split: str) -> Pa
 
 
 def _ground_truth_path(config: dict[str, Any], *, split: str) -> Path:
-    output_dir = Path(str(_section(config, "inference").get("ground_truth_dir", "data/mv_audit/eval_sets_main")))
+    inference_config = _section(config, "inference")
+    if split == "train_decode_dev" and inference_config.get("train_decode_dev_ground_truth_dir"):
+        output_dir = Path(str(inference_config["train_decode_dev_ground_truth_dir"]))
+    else:
+        output_dir = Path(str(inference_config.get("ground_truth_dir", "data/mv_audit/eval_sets_main")))
     return output_dir / f"{split}.jsonl"
 
 
@@ -231,6 +249,7 @@ def _load_model_for_inference(config: dict[str, Any], *, model_id: str):
     adapter_key_by_model = {
         "m2_sft": "sft_adapter_dir",
         "m3_dpo": "dpo_adapter_dir",
+        "m3v2_dpo": "dpo_adapter_dir",
     }
     adapter_key = adapter_key_by_model.get(model_id)
     if adapter_key is not None:
