@@ -175,3 +175,40 @@ def reward_for_grpo(
         float(score_output(completion, truth, images, output_schema)["reward"])
         for completion, truth, images in zip(completions, ground_truths, image_items, strict=True)
     ]
+
+
+def normalize_group_rewards(rewards: list[float], *, eps: float = 1e-6) -> list[float]:
+    """Return group-normalized rewards for GRPO diagnostics."""
+
+    if not rewards:
+        return []
+    mean = sum(rewards) / len(rewards)
+    variance = sum((reward - mean) ** 2 for reward in rewards) / len(rewards)
+    std = variance**0.5
+    if std < eps:
+        return [0.0 for _ in rewards]
+    return [(reward - mean) / (std + eps) for reward in rewards]
+
+
+def summarize_reward_outputs(scores: list[dict[str, Any]]) -> dict[str, float]:
+    """Aggregate Phase 08 reward diagnostics across scored completions."""
+
+    if not scores:
+        return {
+            "count": 0.0,
+            "mean_reward": 0.0,
+            "json_valid_rate": 0.0,
+            "high_risk_miss_rate": 0.0,
+            "hallucination_penalty": 0.0,
+        }
+
+    count = float(len(scores))
+    rewards = [float(score.get("reward", 0.0)) for score in scores]
+    details = [dict(score.get("details") or {}) for score in scores]
+    return {
+        "count": count,
+        "mean_reward": sum(rewards) / count,
+        "json_valid_rate": sum(float(item.get("r_json", 0.0)) for item in details) / count,
+        "high_risk_miss_rate": sum(float(item.get("p_high_risk_miss", 0.0)) for item in details) / count,
+        "hallucination_penalty": sum(float(item.get("p_hallucination", 0.0)) for item in details) / count,
+    }

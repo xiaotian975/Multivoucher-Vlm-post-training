@@ -1,0 +1,4 @@
+model_id,json_validity,schema_compliance,field_em,risk_type_macro_f1,audit_accuracy,high_risk_miss_rate,false_manual_review_rate,evidence_support_rate,hallucination_rate,evidence_bbox_accuracy_relaxed,error_cases
+m0_zero_shot,1.000000,0.000000,0.000000,0.000000,0.000000,1.000000,0.000000,0.000000,0.000000,0.000000,500.000000
+m1_few_shot,1.000000,0.115500,0.113575,0.022163,0.078500,0.999433,0.000000,0.024752,0.575422,0.009810,500.000000
+m2_sft,1.000000,0.876500,0.875550,0.742859,0.773500,0.242664,0.000000,0.803525,0.000795,0.794696,164.500000

@@ -3,20 +3,24 @@ seed: 42
 model:
   model_name_or_path: Qwen/Qwen3-VL-8B-Instruct
   local_model_dir: models/Qwen3-VL-8B-Instruct
-  sft_checkpoint_dir: outputs/checkpoints/sft/qwen3vl_8b_lora
+  sft_checkpoint_dir: outputs/checkpoints/sft/qwen3vl_8b_lora_existing_epoch1
   dtype: auto
   device_map: auto
   trust_remote_code: true
 
 data:
   train_file: data/mv_audit/dpo_main/pairs_train.jsonl
+  output_schema: configs/schema/output_schema.json
+  require_existing_images: true
 
 training:
-  output_dir: outputs/checkpoints/dpo/qwen3vl_8b_dpo
+  output_dir: outputs/checkpoints/dpo/qwen3vl_8b_dpo_from_existing_epoch1
+  metrics_output: outputs/eval_reports/phase08/dpo_reward_audit.json
   learning_rate: 5.0e-6
   num_train_epochs: 1
   per_device_train_batch_size: 1
   gradient_accumulation_steps: 16
+  gradient_checkpointing: true
   beta: 0.1
   bf16: true
   logging_steps: 10

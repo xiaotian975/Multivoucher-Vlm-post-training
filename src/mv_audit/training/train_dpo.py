@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import argparse
+import inspect
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -10,7 +12,9 @@ from typing import Any
 from PIL import Image
 
 from mv_audit.inference.qwen3vl_common import resolve_model_class, resolve_model_path
-from mv_audit.utils import ensure_dir, iter_jsonl, load_config, set_random_seed
+from mv_audit.training.reward_function import score_output, summarize_reward_outputs
+from mv_audit.training.train_sft import DataCollatorForQwenVLSFT, SFTExample
+from mv_audit.utils import ensure_dir, iter_jsonl, load_config, read_yaml, set_random_seed
 
 
 DEFAULT_CONFIG = "configs/train/dpo_qwen3vl_8b.yaml"
@@ -49,6 +53,30 @@ def _read_examples(path: str | Path, *, max_samples: int | None) -> list[DPOExam
     return examples
 
 
+def _image_paths_exist(example: DPOExample) -> bool:
+    return all(Path(str(item.get("image_path") or "")).exists() for item in example.images)
+
+
+def _read_existing_image_examples(path: str | Path, *, max_samples: int | None) -> tuple[list[DPOExample], int]:
+    examples: list[DPOExample] = []
+    skipped_missing_images = 0
+    for row in iter_jsonl(path):
+        example = DPOExample(
+            case_id=str(row["case_id"]),
+            prompt=str(row["prompt"]),
+            chosen=str(row["chosen"]),
+            rejected=str(row["rejected"]),
+            images=list(row.get("images") or []),
+        )
+        if not _image_paths_exist(example):
+            skipped_missing_images += 1
+            continue
+        examples.append(example)
+        if max_samples is not None and len(examples) >= max_samples:
+            break
+    return examples, skipped_missing_images
+
+
 def _validate_examples(examples: list[DPOExample], *, data_file: str | Path) -> None:
     if not examples:
         raise ValueError(f"No DPO examples found in {data_file}.")
@@ -63,6 +91,69 @@ def _validate_examples(examples: list[DPOExample], *, data_file: str | Path) -> 
                 raise FileNotFoundError(f"Image for {example.case_id} does not exist: {path}")
 
 
+def _checkpoint_has_adapter(path: str | Path) -> bool:
+    checkpoint = Path(path)
+    if not checkpoint.exists():
+        return False
+    has_config = (checkpoint / "adapter_config.json").exists()
+    has_weights = (checkpoint / "adapter_model.safetensors").exists() or (checkpoint / "adapter_model.bin").exists()
+    return has_config and has_weights
+
+
+def _write_json(path: str | Path, payload: dict[str, Any]) -> Path:
+    output = Path(path)
+    ensure_dir(output.parent)
+    output.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    return output
+
+
+def _supported_kwargs(callable_obj: Any, kwargs: dict[str, Any]) -> dict[str, Any]:
+    signature = inspect.signature(callable_obj)
+    if any(param.kind == inspect.Parameter.VAR_KEYWORD for param in signature.parameters.values()):
+        return kwargs
+    return {key: value for key, value in kwargs.items() if key in signature.parameters}
+
+
+def _patch_trl_fsdp_import() -> None:
+    """Allow newer TRL imports on torch builds without FSDPModule."""
+
+    try:
+        import torch.distributed.fsdp as fsdp
+    except Exception:
+        return
+    if hasattr(fsdp, "FSDPModule"):
+        return
+    fallback = getattr(fsdp, "FullyShardedDataParallel", None)
+    if fallback is not None:
+        setattr(fsdp, "FSDPModule", fallback)
+
+
+def _score_preference_examples(
+    examples: list[DPOExample],
+    *,
+    output_schema: dict[str, Any],
+) -> dict[str, Any]:
+    chosen_scores: list[dict[str, Any]] = []
+    rejected_scores: list[dict[str, Any]] = []
+    reward_gaps: list[float] = []
+    for example in examples:
+        truth = {"output": json.loads(example.chosen)}
+        chosen = score_output(example.chosen, truth, example.images, output_schema)
+        rejected = score_output(example.rejected, truth, example.images, output_schema)
+        chosen_scores.append(chosen)
+        rejected_scores.append(rejected)
+        reward_gaps.append(float(chosen["reward"]) - float(rejected["reward"]))
+
+    positive_gap_count = sum(1 for gap in reward_gaps if gap > 0)
+    return {
+        "examples": len(examples),
+        "chosen": summarize_reward_outputs(chosen_scores),
+        "rejected": summarize_reward_outputs(rejected_scores),
+        "mean_reward_gap": sum(reward_gaps) / len(reward_gaps) if reward_gaps else 0.0,
+        "positive_reward_gap_rate": positive_gap_count / len(reward_gaps) if reward_gaps else 0.0,
+    }
+
+
 def _dry_run(config: dict[str, Any], *, max_samples: int) -> None:
     data_config = _section(config, "data")
     train_config = _section(config, "training")
@@ -70,15 +161,28 @@ def _dry_run(config: dict[str, Any], *, max_samples: int) -> None:
     data_file = data_config.get("train_file")
     if not data_file:
         raise ValueError("data.train_file is required.")
-    examples = _read_examples(data_file, max_samples=max_samples)
+    if bool(data_config.get("require_existing_images", False)):
+        examples, skipped_missing_images = _read_existing_image_examples(data_file, max_samples=max_samples)
+    else:
+        examples = _read_examples(data_file, max_samples=max_samples)
+        skipped_missing_images = 0
     _validate_examples(examples, data_file=data_file)
     output_dir = ensure_dir(str(train_config.get("output_dir", "outputs/checkpoints/dpo/qwen3vl_8b_dpo")))
     sft_checkpoint = Path(str(model_config.get("sft_checkpoint_dir", "")))
+    schema = read_yaml(data_config.get("output_schema", "configs/schema/output_schema.json"))
+    audit = _score_preference_examples(examples, output_schema=schema)
+    metrics_path = train_config.get("metrics_output")
+    if metrics_path:
+        _write_json(metrics_path, {"stage": "dpo_dry_run", "skipped_missing_images": skipped_missing_images, **audit})
     print("phase08_dpo_dry_run=ok")
     print(f"train_file={data_file}")
     print(f"examples_checked={len(examples)}")
+    print(f"skipped_missing_images={skipped_missing_images}")
     print(f"output_dir={output_dir}")
     print(f"sft_checkpoint_exists={sft_checkpoint.exists()}")
+    print(f"sft_adapter_exists={_checkpoint_has_adapter(sft_checkpoint)}")
+    print(f"mean_reward_gap={audit['mean_reward_gap']:.6f}")
+    print(f"positive_reward_gap_rate={audit['positive_reward_gap_rate']:.6f}")
 
 
 def _to_dataset_rows(examples: list[DPOExample]) -> list[dict[str, Any]]:
@@ -96,6 +200,57 @@ def _to_dataset_rows(examples: list[DPOExample]) -> list[dict[str, Any]]:
     return rows
 
 
+def _as_sft_example(example: DPOExample, answer: str) -> SFTExample:
+    return SFTExample(
+        case_id=example.case_id,
+        images=example.images,
+        user_prompt=example.prompt,
+        answer=answer,
+    )
+
+
+def _move_batch_to_device(batch: dict[str, Any], device: Any) -> dict[str, Any]:
+    moved: dict[str, Any] = {}
+    for key, value in batch.items():
+        if hasattr(value, "to"):
+            moved[key] = value.to(device)
+        else:
+            moved[key] = value
+    return moved
+
+
+def _model_device(model: Any) -> Any:
+    return next(model.parameters()).device
+
+
+def _sequence_logps(model: Any, batch: dict[str, Any], *, logprob_chunk_size: int = 64) -> Any:
+    import torch
+
+    labels = batch["labels"]
+    model_inputs = {key: value for key, value in batch.items() if key != "labels"}
+    outputs = model(**model_inputs)
+    logits = outputs.logits[:, :-1, :]
+    shift_labels = labels[:, 1:]
+    label_mask = shift_labels.ne(-100)
+    safe_labels = shift_labels.masked_fill(~label_mask, 0)
+    sequence_logps = torch.zeros(logits.shape[0], device=logits.device, dtype=logits.dtype)
+    for start in range(0, logits.shape[1], logprob_chunk_size):
+        end = min(start + logprob_chunk_size, logits.shape[1])
+        chunk_logits = logits[:, start:end, :]
+        chunk_labels = safe_labels[:, start:end]
+        chunk_mask = label_mask[:, start:end]
+        chunk_logps = torch.nn.functional.log_softmax(chunk_logits, dim=-1).gather(
+            dim=-1,
+            index=chunk_labels.unsqueeze(-1),
+        ).squeeze(-1)
+        sequence_logps = sequence_logps + (chunk_logps * chunk_mask).sum(dim=-1)
+    return sequence_logps
+
+
+def _iter_batches(examples: list[DPOExample], *, batch_size: int) -> list[list[DPOExample]]:
+    return [examples[index : index + batch_size] for index in range(0, len(examples), batch_size)]
+
+
 def _load_sft_policy(config: dict[str, Any]):
     try:
         from peft import PeftModel
@@ -104,6 +259,8 @@ def _load_sft_policy(config: dict[str, Any]):
         raise ImportError("peft and transformers are required for DPO training.") from exc
 
     model_config = _section(config, "model")
+    if not _checkpoint_has_adapter(model_config["sft_checkpoint_dir"]):
+        raise FileNotFoundError(f"SFT adapter checkpoint is incomplete: {model_config['sft_checkpoint_dir']}")
     model_path = resolve_model_path(model_config)
     model_class = resolve_model_class()
     processor = AutoProcessor.from_pretrained(model_path, trust_remote_code=bool(model_config.get("trust_remote_code", True)))
@@ -125,52 +282,103 @@ def _load_sft_policy(config: dict[str, Any]):
 
 def _train(config: dict[str, Any], *, max_samples: int | None) -> None:
     try:
-        from datasets import Dataset
-        from trl import DPOConfig, DPOTrainer
+        import torch
+        from transformers import AutoProcessor
     except ImportError as exc:
-        raise ImportError("datasets and trl are required for DPO training.") from exc
+        raise ImportError("torch and transformers are required for DPO training.") from exc
 
     data_config = _section(config, "data")
     train_config = _section(config, "training")
     set_random_seed(int(config.get("seed", 42)))
-    examples = _read_examples(data_config["train_file"], max_samples=max_samples)
+    if bool(data_config.get("require_existing_images", False)):
+        examples, skipped_missing_images = _read_existing_image_examples(data_config["train_file"], max_samples=max_samples)
+    else:
+        examples = _read_examples(data_config["train_file"], max_samples=max_samples)
+        skipped_missing_images = 0
     _validate_examples(examples, data_file=data_config["train_file"])
+    schema = read_yaml(data_config.get("output_schema", "configs/schema/output_schema.json"))
+    preference_audit = _score_preference_examples(examples, output_schema=schema)
+    metrics_path = train_config.get("metrics_output")
+    if metrics_path:
+        _write_json(metrics_path, {"stage": "dpo_pre_train", "skipped_missing_images": skipped_missing_images, **preference_audit})
     policy, ref_policy, processor = _load_sft_policy(config)
-    dataset = Dataset.from_list(_to_dataset_rows(examples))
-    args = DPOConfig(
-        output_dir=str(train_config.get("output_dir", "outputs/checkpoints/dpo/qwen3vl_8b_dpo")),
-        learning_rate=float(train_config.get("learning_rate", 5e-6)),
-        num_train_epochs=float(train_config.get("num_train_epochs", 1)),
-        per_device_train_batch_size=int(train_config.get("per_device_train_batch_size", 1)),
-        gradient_accumulation_steps=int(train_config.get("gradient_accumulation_steps", 16)),
-        beta=float(train_config.get("beta", 0.1)),
-        bf16=bool(train_config.get("bf16", True)),
-        logging_steps=int(train_config.get("logging_steps", 10)),
-        save_steps=int(train_config.get("save_steps", 500)),
-        save_total_limit=int(train_config.get("save_total_limit", 2)),
-        max_length=None,
-        max_prompt_length=None,
-        remove_unused_columns=False,
-        report_to=list(train_config.get("report_to", [])),
+    del AutoProcessor
+
+    if bool(train_config.get("gradient_checkpointing", True)):
+        policy.gradient_checkpointing_enable()
+        if hasattr(policy, "enable_input_require_grads"):
+            policy.enable_input_require_grads()
+
+    ref_policy.eval()
+    policy.train()
+    collator = DataCollatorForQwenVLSFT(processor)
+    optimizer = torch.optim.AdamW(
+        [parameter for parameter in policy.parameters() if parameter.requires_grad],
+        lr=float(train_config.get("learning_rate", 5e-6)),
     )
-    try:
-        trainer = DPOTrainer(
-            model=policy,
-            ref_model=ref_policy,
-            args=args,
-            train_dataset=dataset,
-            processing_class=processor,
+    batch_size = int(train_config.get("per_device_train_batch_size", 1))
+    grad_accum = int(train_config.get("gradient_accumulation_steps", 16))
+    epochs = int(float(train_config.get("num_train_epochs", 1)))
+    beta = float(train_config.get("beta", 0.1))
+    logging_steps = int(train_config.get("logging_steps", 10))
+    save_steps = int(train_config.get("save_steps", 500))
+    output_dir = ensure_dir(str(train_config.get("output_dir", "outputs/checkpoints/dpo/qwen3vl_8b_dpo")))
+    batches = _iter_batches(examples, batch_size=batch_size)
+    global_step = 0
+    micro_step = 0
+    history: list[dict[str, float]] = []
+    optimizer.zero_grad(set_to_none=True)
+
+    for epoch in range(epochs):
+        for batch_examples in batches:
+            chosen_batch = collator([_as_sft_example(example, example.chosen) for example in batch_examples])
+            rejected_batch = collator([_as_sft_example(example, example.rejected) for example in batch_examples])
+            chosen_batch = _move_batch_to_device(chosen_batch, _model_device(policy))
+            rejected_batch = _move_batch_to_device(rejected_batch, _model_device(policy))
+            autocast_enabled = bool(train_config.get("bf16", True)) and torch.cuda.is_available()
+            with torch.autocast(device_type="cuda", dtype=torch.bfloat16, enabled=autocast_enabled):
+                with torch.no_grad():
+                    ref_chosen = _sequence_logps(ref_policy, _move_batch_to_device(chosen_batch, _model_device(ref_policy)))
+                    ref_rejected = _sequence_logps(ref_policy, _move_batch_to_device(rejected_batch, _model_device(ref_policy)))
+                policy_chosen = _sequence_logps(policy, chosen_batch)
+                policy_rejected = _sequence_logps(policy, rejected_batch)
+                logits = (policy_chosen - policy_rejected) - (ref_chosen - ref_rejected)
+                loss = -torch.nn.functional.logsigmoid(beta * logits).mean()
+            (loss / grad_accum).backward()
+            micro_step += 1
+            if micro_step % grad_accum == 0 or micro_step == len(batches) * epochs:
+                optimizer.step()
+                optimizer.zero_grad(set_to_none=True)
+                global_step += 1
+                record = {
+                    "epoch": float(epoch + 1),
+                    "global_step": float(global_step),
+                    "loss": float(loss.detach().cpu()),
+                    "chosen_logp": float(policy_chosen.detach().mean().cpu()),
+                    "rejected_logp": float(policy_rejected.detach().mean().cpu()),
+                    "preference_margin": float(logits.detach().mean().cpu()),
+                }
+                history.append(record)
+                if global_step % logging_steps == 0 or global_step == 1:
+                    print(json.dumps({"stage": "dpo_train", **record}, ensure_ascii=False))
+                if save_steps > 0 and global_step % save_steps == 0:
+                    checkpoint_dir = ensure_dir(output_dir / f"checkpoint-{global_step}")
+                    policy.save_pretrained(str(checkpoint_dir))
+                    processor.save_pretrained(str(checkpoint_dir))
+
+    policy.save_pretrained(str(output_dir))
+    processor.save_pretrained(str(output_dir))
+    if metrics_path:
+        _write_json(
+            metrics_path,
+            {
+                "stage": "dpo_done",
+                "skipped_missing_images": skipped_missing_images,
+                **preference_audit,
+                "training_history": history,
+                "global_step": global_step,
+            },
         )
-    except TypeError:
-        trainer = DPOTrainer(
-            model=policy,
-            ref_model=ref_policy,
-            args=args,
-            train_dataset=dataset,
-            tokenizer=processor,
-        )
-    trainer.train()
-    trainer.save_model(str(train_config.get("output_dir", "outputs/checkpoints/dpo/qwen3vl_8b_dpo")))
 
 
 def parse_args() -> argparse.Namespace:

@@ -222,3 +222,35 @@ python -m mv_audit.inference.qwen3vl_multi_image_test \
 - SFT 已完成训练，并且在验证集上做过 loss eval。
 - Phase 07 的 `M0/M1/M2` 抽样推理和业务指标评测仍在独立的 `phase07_sample500` 输出目录中推进。
 - 当前不记录 DPO/GRPO 结果；这部分属于 Phase 08，需等 Phase 07 的 SFT 输出稳定性和业务指标确认后再推进。
+
+## Phase 07 抽样评测结果（2026-08-11）
+
+Phase 07 sample500 已完成并归档。服务器侧完成 `M0/M1/M2 × 4 splits × 500`，共 `6000/6000` 条预测；完整评测结果已整理到 `docs/experiments/phase07_sample500/`。全量 predictions、checkpoint 和训练日志仍保留在服务器 `outputs/` 中，不进入 Git 仓库。
+
+完整报告和图表：
+
+- [Phase 07 Sample500 抽样评测报告](docs/experiments/phase07_sample500/phase07_sample500_report.md)
+- [完整 12 行指标表](docs/experiments/phase07_sample500/metrics_summary.csv)
+- [按模型聚合指标表](docs/experiments/phase07_sample500/metrics_by_model.csv)
+- [模型平均指标图](docs/experiments/phase07_sample500/figures/model_average_metrics.png)
+- [M2 分测试集指标图](docs/experiments/phase07_sample500/figures/m2_split_metrics.png)
+- [错误样本数量图](docs/experiments/phase07_sample500/figures/error_cases_by_split.png)
+
+M2 LoRA-SFT 核心结果如下：
+
+| Split | JSON Validity | Schema Compliance | Field EM | Audit Accuracy | High-risk Miss Rate | Evidence Support Rate |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| test_clean | 1.000 | 0.832 | 0.831 | 0.744 | 0.270 | 0.747 |
+| test_robust | 1.000 | 0.810 | 0.809 | 0.742 | 0.276 | 0.727 |
+| test_unseen_template | 1.000 | 0.864 | 0.863 | 0.742 | 0.274 | 0.775 |
+| test_hard_negative | 1.000 | 1.000 | 0.9998 | 0.866 | 0.152 | 0.965 |
+
+按 4 个 split 求平均后，模型对比如下：
+
+| Model | Schema Compliance | Field EM | Risk Type Macro-F1 | Audit Accuracy | High-risk Miss Rate | Evidence Support Rate | Hallucination Rate |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| M0 zero-shot | 0.000 | 0.000 | 0.000 | 0.000 | 1.000 | 0.000 | 0.000 |
+| M1 few-shot | 0.115 | 0.114 | 0.022 | 0.079 | 0.999 | 0.025 | 0.575 |
+| M2 LoRA-SFT | 0.877 | 0.876 | 0.743 | 0.774 | 0.243 | 0.804 | 0.001 |
+
+结论：M2 相比 M0/M1 显著提升了结构化输出、字段抽取、审计准确率和证据支持率，JSON Validity 在四个测试集上均为 `1.000`。但 M2 的高风险漏检率仍约为 `0.15-0.28`，说明后续 Phase 08 的 DPO/GRPO 仍有明确价值。

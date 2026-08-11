@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from copy import deepcopy
 
-from mv_audit.training.reward_function import score_output
+from mv_audit.training.reward_function import normalize_group_rewards, score_output, summarize_reward_outputs
 from mv_audit.utils import read_yaml
 
 
@@ -156,6 +156,18 @@ def test_wrong_evidence_source_penalty() -> None:
     assert result["reward"] < 1, result
 
 
+def test_reward_summary_and_group_normalization() -> None:
+    perfect = _score(_truth())
+    invalid = _score('{"case_id": "broken", "audit_result": pass')
+    summary = summarize_reward_outputs([perfect, invalid])
+    assert summary["count"] == 2.0, summary
+    assert summary["json_valid_rate"] == 0.5, summary
+    normalized = normalize_group_rewards([1.0, 0.0, -1.0])
+    assert len(normalized) == 3, normalized
+    assert abs(sum(normalized)) < 1e-6, normalized
+    assert normalize_group_rewards([0.5, 0.5]) == [0.0, 0.0]
+
+
 def main() -> None:
     tests = [
         test_perfect_answer,
@@ -164,6 +176,7 @@ def main() -> None:
         test_missing_document_pass,
         test_unreadable_guess_penalty,
         test_wrong_evidence_source_penalty,
+        test_reward_summary_and_group_normalization,
     ]
     for test in tests:
         test()
