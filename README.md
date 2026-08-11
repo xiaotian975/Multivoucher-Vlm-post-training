@@ -254,3 +254,50 @@ M2 LoRA-SFT 核心结果如下：
 | M2 LoRA-SFT | 0.877 | 0.876 | 0.743 | 0.774 | 0.243 | 0.804 | 0.001 |
 
 结论：M2 相比 M0/M1 显著提升了结构化输出、字段抽取、审计准确率和证据支持率，JSON Validity 在四个测试集上均为 `1.000`。但 M2 的高风险漏检率仍约为 `0.15-0.28`，说明后续 Phase 08 的 DPO/GRPO 仍有明确价值。
+
+## Phase 08 DPO 训练结果（2026-08-11）
+
+Phase 08 已完成 DPO 子任务的 sample1000 训练与结果归档。本节只记录 `M3 = SFT + DPO` adapter 的训练过程和 reward 审计结果；M3 sample500 业务指标评测正在使用 DPO adapter 启动，GRPO 暂不启动。
+
+完整报告和图表：
+
+- [Phase 08 DPO Sample1000 实验报告](docs/experiments/phase08_dpo_sample1000/phase08_dpo_sample1000_report.md)
+- [DPO 汇总指标](docs/experiments/phase08_dpo_sample1000/dpo_summary.csv)
+- [DPO 训练历史](docs/experiments/phase08_dpo_sample1000/training_history.csv)
+- [DPO loss 曲线](docs/experiments/phase08_dpo_sample1000/figures/dpo_loss_curve.png)
+- [Preference margin 曲线](docs/experiments/phase08_dpo_sample1000/figures/dpo_preference_margin.png)
+- [Chosen/Rejected logp 对比](docs/experiments/phase08_dpo_sample1000/figures/dpo_logp_comparison.png)
+
+### DPO 实验设置
+
+- 初始模型：`Qwen3-VL-8B-Instruct` + Phase 07 SFT adapter。
+- SFT adapter：`outputs/checkpoints/sft/qwen3vl_8b_lora_existing_epoch1/`。
+- DPO adapter：`outputs/checkpoints/dpo/qwen3vl_8b_dpo_from_existing_epoch1/`。
+- 训练配置：`configs/train/dpo_qwen3vl_8b.yaml`。
+- 训练数据：`data/mv_audit/dpo_main/pairs_train.jsonl`，来自 MV-Train。
+- 本次运行：`max_samples=1000`，`require_existing_images=true`。
+- 因缺少可用图片而跳过的 pair：`324`。
+
+### DPO 核心结果
+
+| Metric | Value |
+| --- | ---: |
+| examples | 1000 |
+| global_step | 63 |
+| final loss | 0.000568 |
+| chosen mean reward | 1.000000 |
+| rejected mean reward | 0.460112 |
+| mean reward gap | 0.539888 |
+| positive reward gap rate | 0.844000 |
+| rejected JSON valid rate | 0.896000 |
+| rejected high-risk miss rate | 0.155000 |
+| rejected hallucination penalty | 0.015506 |
+
+训练动态显示，loss 从 `0.6877865195274353` 下降到 `0.0005680027534253895`，preference margin 从 `0.10750198364257812` 上升到 `74.73100280761719`，说明 DPO 训练已经明显拉开 chosen 与 rejected 的偏好差距。
+
+### 当前 Phase 08 状态
+
+- 已完成：reward function、DPO 训练代码、DPO sample1000 后台训练、DPO adapter、DPO reward 审计、训练曲线和实验归档。
+- 正在推进：用 DPO adapter 做 `M3 SFT + DPO` 的 sample500 抽样推理评测。
+- 未完成：GRPO 训练、M4 推理评测、M2/M3/M4 最终业务指标对比。
+- 当前判断：DPO 训练过程符合预期，但是否真正降低 High-risk Miss Rate、Hallucination Rate 并提升 Evidence Support Rate，需要以 M3 sample500 评测报告为准。

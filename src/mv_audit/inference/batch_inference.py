@@ -1,4 +1,4 @@
-"""Batch inference for Phase 07 M0/M1/M2 comparisons."""
+"""Batch inference for M0/M1/M2 and Phase 08 M3 comparisons."""
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ from mv_audit.inference.qwen3vl_common import (
 from mv_audit.utils import ensure_dir, iter_jsonl, load_config, read_jsonl, write_jsonl
 
 
-MODEL_IDS = {"m0_zero_shot", "m1_few_shot", "m2_sft"}
+MODEL_IDS = {"m0_zero_shot", "m1_few_shot", "m2_sft", "m3_dpo"}
 TEST_SPLITS = {"test_clean", "test_robust", "test_unseen_template", "test_hard_negative"}
 DEFAULT_CONFIG = "configs/train/sft_lora_qwen3vl_8b.yaml"
 
@@ -228,14 +228,19 @@ def _dry_run(config: dict[str, Any], *, model_id: str, split: str, limit: int | 
 def _load_model_for_inference(config: dict[str, Any], *, model_id: str):
     model_config = dict(_section(config, "model"))
     model, processor, model_path = load_qwen3vl_model_and_processor(model_config)
-    if model_id == "m2_sft":
-        adapter_dir = _section(config, "inference").get("sft_adapter_dir")
+    adapter_key_by_model = {
+        "m2_sft": "sft_adapter_dir",
+        "m3_dpo": "dpo_adapter_dir",
+    }
+    adapter_key = adapter_key_by_model.get(model_id)
+    if adapter_key is not None:
+        adapter_dir = _section(config, "inference").get(adapter_key)
         if not adapter_dir:
-            raise ValueError("inference.sft_adapter_dir is required for m2_sft.")
+            raise ValueError(f"inference.{adapter_key} is required for {model_id}.")
         try:
             from peft import PeftModel
         except ImportError as exc:
-            raise ImportError("peft is required to load the M2 SFT adapter.") from exc
+            raise ImportError(f"peft is required to load the {model_id} adapter.") from exc
         model = PeftModel.from_pretrained(model, str(adapter_dir))
         model.eval()
     return model, processor, model_path
@@ -317,7 +322,7 @@ def run_inference(config: dict[str, Any], *, model_id: str, split: str, limit: i
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Phase 07 batch inference for M0/M1/M2.")
+    parser = argparse.ArgumentParser(description="Batch inference for M0/M1/M2 and Phase 08 M3.")
     parser.add_argument("--config", default=DEFAULT_CONFIG)
     parser.add_argument("--model_id", required=True, choices=sorted(MODEL_IDS))
     parser.add_argument("--split", required=True, choices=sorted(TEST_SPLITS))

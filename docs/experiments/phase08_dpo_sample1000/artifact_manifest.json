@@ -1,0 +1,51 @@
+{
+  "experiment": "phase08_dpo_sample1000",
+  "collected_at_utc": "2026-08-11T06:48:15.021928+00:00",
+  "server": {
+    "host": "connect.westc.seetacloud.com",
+    "port": 56911,
+    "repo_path": "/root/autodl-tmp/VLM-Post-Training",
+    "source_files": {
+      "metrics": "outputs/eval_reports/phase08/dpo_reward_audit.json",
+      "checkpoint": "outputs/checkpoints/dpo/qwen3vl_8b_dpo_from_existing_epoch1/",
+      "log": "outputs/logs/phase08_dpo_sample1000.log"
+    }
+  },
+  "files": [
+    {
+      "path": "dpo_reward_audit.json",
+      "size_bytes": 15445,
+      "sha256": "b9727e463bbd43df7f44c813517d88ef6bca0319aad4b4ba0cb0dbd275e9ada1"
+    },
+    {
+      "path": "dpo_summary.csv",
+      "size_bytes": 359,
+      "sha256": "56ac8d128065c9673e086b5765534144da95411f7d73eb0e46a205971da082b6"
+    },
+    {
+      "path": "figures/dpo_logp_comparison.png",
+      "size_bytes": 103109,
+      "sha256": "01d62cd3c0552251757cc42b80d334ae6435cd8c52494d76d38602017d405bbb"
+    },
+    {
+      "path": "figures/dpo_loss_curve.png",
+      "size_bytes": 68458,
+      "sha256": "917b90c9d0f6a48101f477711c2369010f94b9df683dd1bbbeda2fc4ccf03458"
+    },
+    {
+      "path": "figures/dpo_preference_margin.png",
+      "size_bytes": 92104,
+      "sha256": "1bf7cf60a864ca52cfdc67ccdc70fc8e3bb1d7b7a40766b73a63a1ed979d4265"
+    },
+    {
+      "path": "phase08_dpo_sample1000_report.md",
+      "size_bytes": 2078,
+      "sha256": "f6408e2613b901dc409c2eac4b6db24e6d7c781fb8d9e1ea10978c83a946c2d1"
+    },
+    {
+      "path": "training_history.csv",
+      "size_bytes": 5735,
+      "sha256": "07fa5c956600337f753c04fcaa27bda6c93721c02a011630e7304b40916ad03d"
+    }
+  ]
+}

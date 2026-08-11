@@ -1,0 +1,13 @@
+metric,value
+stage,dpo_done
+examples,1000
+skipped_missing_images,324
+global_step,63
+history_len,63
+chosen_mean_reward,1.0
+rejected_mean_reward,0.4601118055555572
+mean_reward_gap,0.5398881944444432
+positive_reward_gap_rate,0.844
+rejected_json_valid_rate,0.896
+rejected_high_risk_miss_rate,0.155
+rejected_hallucination_penalty,0.015505555555555531
