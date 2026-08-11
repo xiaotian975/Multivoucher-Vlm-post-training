@@ -257,7 +257,7 @@ M2 LoRA-SFT 核心结果如下：
 
 ## Phase 08 DPO 训练结果（2026-08-11）
 
-Phase 08 已完成 DPO 子任务的 sample1000 训练与结果归档。本节只记录 `M3 = SFT + DPO` adapter 的训练过程和 reward 审计结果；M3 sample500 业务指标评测正在使用 DPO adapter 启动，GRPO 暂不启动。
+Phase 08 已完成 DPO 子任务的 sample1000 训练与结果归档。本节只记录 `M3 = SFT + DPO` adapter 的训练过程和 reward 审计结果；M3 sample500 业务指标评测结果见下一节。GRPO 目前只有 smoke 级别产物，不作为正式结果写入。
 
 完整报告和图表：
 
@@ -298,6 +298,46 @@ Phase 08 已完成 DPO 子任务的 sample1000 训练与结果归档。本节只
 ### 当前 Phase 08 状态
 
 - 已完成：reward function、DPO 训练代码、DPO sample1000 后台训练、DPO adapter、DPO reward 审计、训练曲线和实验归档。
-- 正在推进：用 DPO adapter 做 `M3 SFT + DPO` 的 sample500 抽样推理评测。
-- 未完成：GRPO 训练、M4 推理评测、M2/M3/M4 最终业务指标对比。
-- 当前判断：DPO 训练过程符合预期，但是否真正降低 High-risk Miss Rate、Hallucination Rate 并提升 Evidence Support Rate，需要以 M3 sample500 评测报告为准。
+- 已完成：用 DPO adapter 做 `M3 SFT + DPO` 的 sample500 抽样推理评测，结果见下一节。
+- 未完成：正式 GRPO 训练、M4 推理评测、M2/M3/M4 最终业务指标对比。
+- 当前判断：DPO 训练过程收敛，但 M3 业务指标未明显优于 M2，因此 Phase 08 不能直接判定为成功。
+
+## Phase 08 M3 Sample500 评测结果（2026-08-11）
+
+Phase 08 的 `M3 = SFT + DPO` sample500 推理评测已完成并归档。服务器侧采用 8 卡 shard 数据并行完成剩余推理，四个 split 均合并为 `500/500`；`merge_summary.json` 显示 `missing=0`、`duplicates_seen_before_dedup=0`。全量 predictions、checkpoint 和原始日志仍保留在服务器 `outputs/` 中，不进入 Git。
+
+完整报告和图表：
+
+- [Phase 08 M3 Sample500 评测报告](docs/experiments/phase08_m3_sample500/phase08_m3_sample500_report.md)
+- [M3 完整指标表](docs/experiments/phase08_m3_sample500/metrics_summary.csv)
+- [M2/M3 平均对比表](docs/experiments/phase08_m3_sample500/metrics_by_model.csv)
+- [M2/M3 逐 split 对比表](docs/experiments/phase08_m3_sample500/m2_m3_comparison.csv)
+- [M2/M3 平均指标图](docs/experiments/phase08_m3_sample500/figures/m2_vs_m3_average_metrics.png)
+- [M3 分 split 指标图](docs/experiments/phase08_m3_sample500/figures/m3_split_metrics.png)
+- [M3 error cases 数量图](docs/experiments/phase08_m3_sample500/figures/m3_error_cases_by_split.png)
+
+M3 核心结果如下：
+
+| Split | JSON Validity | Schema Compliance | Audit Accuracy | High-risk Miss Rate | Evidence Support Rate | Hallucination Rate | Error Cases |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| test_clean | 1.000 | 0.808 | 0.650 | 0.264 | 0.727 | 0.002 | 227 |
+| test_robust | 1.000 | 0.804 | 0.652 | 0.264 | 0.724 | 0.002 | 203 |
+| test_unseen_template | 1.000 | 0.868 | 0.634 | 0.276 | 0.778 | 0.001 | 231 |
+| test_hard_negative | 1.000 | 1.000 | 0.738 | 0.145 | 0.966 | 0.001 | 183 |
+
+按四个 split 求平均后，M2 与 M3 对比如下：
+
+| Model | Schema Compliance | Audit Accuracy | High-risk Miss Rate | Evidence Support Rate | Hallucination Rate | Error Cases Avg |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| M2 LoRA-SFT | 0.877 | 0.773 | 0.243 | 0.804 | 0.001 | 164.500 |
+| M3 SFT+DPO | 0.870 | 0.668 | 0.237 | 0.799 | 0.001 | 211.000 |
+| Delta M3-M2 | -0.007 | -0.105 | -0.005 | -0.005 | 0.001 | 46.500 |
+
+结论：DPO 后的 M3 没有明显优于 M2。M3 的 JSON Validity 仍为 `1.000`，High-risk Miss Rate 平均只从 `0.243` 小幅降到 `0.237`，但 Audit Accuracy 从 `0.773` 降到 `0.668`，error cases 平均数量也增加。因此当前不能把 Phase 08 直接判定为成功，后续需要复盘 DPO 偏好数据或 reward 构造。
+
+当前 Phase 08 验收状态：
+
+- DPO 子任务：已完成。
+- M3 sample500 推理评测：已完成。
+- GRPO/M4：未正式完成。服务器上仅存在 `examples=1/global_step=1` 的 GRPO smoke 级别产物，不作为正式 M4 结果写入。
+- Phase 08 整体：未完全验收完成；若下一步是 DPO/GRPO 调整分析，依赖已满足；若要进入最终实验报告或最终 demo，还需要正式 GRPO、M4 sample500 和 M2/M3/M4 对比。

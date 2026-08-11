@@ -1,0 +1,29 @@
+{
+  "runtime": "/root/autodl-tmp/VLM-Post-Training/outputs/runtime/phase08_m3_shards/20260811_160234",
+  "splits": {
+    "test_clean": {
+      "final_path": "outputs/predictions/phase08_m3_sample500/m3_dpo/test_clean.jsonl",
+      "rows": 500,
+      "duplicates_seen_before_dedup": 0,
+      "missing": 0
+    },
+    "test_robust": {
+      "final_path": "outputs/predictions/phase08_m3_sample500/m3_dpo/test_robust.jsonl",
+      "rows": 500,
+      "duplicates_seen_before_dedup": 0,
+      "missing": 0
+    },
+    "test_unseen_template": {
+      "final_path": "outputs/predictions/phase08_m3_sample500/m3_dpo/test_unseen_template.jsonl",
+      "rows": 500,
+      "duplicates_seen_before_dedup": 0,
+      "missing": 0
+    },
+    "test_hard_negative": {
+      "final_path": "outputs/predictions/phase08_m3_sample500/m3_dpo/test_hard_negative.jsonl",
+      "rows": 500,
+      "duplicates_seen_before_dedup": 0,
+      "missing": 0
+    }
+  }
+}

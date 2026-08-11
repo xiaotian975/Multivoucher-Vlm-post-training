@@ -1,0 +1,102 @@
+{
+  "experiment": "phase08_m3_sample500",
+  "collected_at_utc": "2026-08-11T12:14:28.995076+00:00",
+  "server": {
+    "host": "connect.westc.seetacloud.com",
+    "port": 56911,
+    "repo_path": "/root/autodl-tmp/VLM-Post-Training",
+    "source_paths": {
+      "metrics": "outputs/eval_reports/phase08_m3_sample500/",
+      "merge_summary": "outputs/runtime/phase08_m3_shards/20260811_160234/merge_summary.json",
+      "predictions_retained_on_server": "outputs/predictions/phase08_m3_sample500/"
+    },
+    "excluded_from_git": [
+      "full predictions",
+      "checkpoints",
+      "raw logs",
+      "runtime shard configs"
+    ]
+  },
+  "files": [
+    {
+      "path": "error_cases/m3_dpo_test_clean_errors.jsonl",
+      "size_bytes": 94563,
+      "sha256": "fd811ebeb1abc6a27b88fd51d1f63d73c1668abed2f98d3d4d96d7fbee2df6c4"
+    },
+    {
+      "path": "error_cases/m3_dpo_test_hard_negative_errors.jsonl",
+      "size_bytes": 48712,
+      "sha256": "745f0269136ffaff63e8194c1ca57d93ade1c4c7ec808e5ee07ef0afb378d3ba"
+    },
+    {
+      "path": "error_cases/m3_dpo_test_robust_errors.jsonl",
+      "size_bytes": 89011,
+      "sha256": "2bacdfe995340005f6631f3cd1dfee1a0ef67ab0f49b783cce8ac373fde1bf7a"
+    },
+    {
+      "path": "error_cases/m3_dpo_test_unseen_template_errors.jsonl",
+      "size_bytes": 85164,
+      "sha256": "e2cf48dda3fa368bec973ce43161d84204baca5b0018100f787b5e2ce450968e"
+    },
+    {
+      "path": "figures/m2_vs_m3_average_metrics.png",
+      "size_bytes": 57154,
+      "sha256": "2aecfd57a32bf0037b1edf2aa8d66f28269becb3c3c5056e3e52bbab131b9667"
+    },
+    {
+      "path": "figures/m3_error_cases_by_split.png",
+      "size_bytes": 53272,
+      "sha256": "938218fcaf7874fcd5bdd14dfce14636e2bfd6e88ea7c5fbfc5b9edb018f42e0"
+    },
+    {
+      "path": "figures/m3_split_metrics.png",
+      "size_bytes": 86208,
+      "sha256": "cf122eb3590721c83ebac47b23103b9b6cbcfe901ce9875bab69fba82f33784b"
+    },
+    {
+      "path": "m2_m3_comparison.csv",
+      "size_bytes": 2656,
+      "sha256": "b13056e34c43ca7a7282579fb3173b4808a1c6bcd3bdce722c32ccca79786ada"
+    },
+    {
+      "path": "m3_dpo_test_clean_metrics.json",
+      "size_bytes": 603,
+      "sha256": "42fac218081409de36f17dacae8660b23cf3e888eaa9206f22b8352797c32207"
+    },
+    {
+      "path": "m3_dpo_test_hard_negative_metrics.json",
+      "size_bytes": 606,
+      "sha256": "67c283f7bda9e723fa1d2c1d61f4c63873629ed636a58af52e74135f1089ac8b"
+    },
+    {
+      "path": "m3_dpo_test_robust_metrics.json",
+      "size_bytes": 606,
+      "sha256": "1ed20d8368987f682fde7c324252ebc54d17043d3ce3e1409cc1752d4119a23f"
+    },
+    {
+      "path": "m3_dpo_test_unseen_template_metrics.json",
+      "size_bytes": 606,
+      "sha256": "29f54acd11eef31f0bc2ee8a0fe7489c1330e56506abe8905299a10dfb8e3f50"
+    },
+    {
+      "path": "merge_summary.json",
+      "size_bytes": 936,
+      "sha256": "a35ef7a3014ea351de17f440138831a9d0305356ee605d3899fc135ddd61f2f9"
+    },
+    {
+      "path": "metrics_by_model.csv",
+      "size_bytes": 509,
+      "sha256": "506bff248712c236f5b62ad850514df8ec1867444e46340b2b872691c44be384"
+    },
+    {
+      "path": "metrics_summary.csv",
+      "size_bytes": 854,
+      "sha256": "b51599dde92e3d08c4cf232b2e5979e1548021af986cbedb217dfe5c2442a1df"
+    },
+    {
+      "path": "phase08_m3_sample500_report.md",
+      "size_bytes": 2687,
+      "sha256": "1e7234c33ef5ece6c14c6d52e10cc5065106f55405e48c6ad3d98ab75d10c979"
+    }
+  ]
+}
