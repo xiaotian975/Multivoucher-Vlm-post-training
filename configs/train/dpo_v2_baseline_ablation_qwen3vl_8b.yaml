@@ -18,11 +18,11 @@ data:
   train_only: true
 
 training:
-  output_dir: outputs/checkpoints/dpo/qwen3vl_8b_dpo_v2_conservative
-  metrics_output: outputs/eval_reports/phase08_dpo_v2/dpo_v2_reward_audit.json
+  output_dir: outputs/checkpoints/dpo/qwen3vl_8b_dpo_v2_baseline_ablation
+  metrics_output: outputs/eval_reports/phase08_dpo_v2_baseline_ablation/dpo_v2_reward_audit.json
   learning_rate: 1.0e-6
   num_train_epochs: 1
-  max_train_steps: 80
+  max_train_steps: 40
   per_device_train_batch_size: 1
   gradient_accumulation_steps: 16
   gradient_checkpointing: true

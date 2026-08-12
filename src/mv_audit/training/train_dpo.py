@@ -227,6 +227,11 @@ def _dry_run(config: dict[str, Any], *, max_samples: int) -> None:
             {
                 "stage": "dpo_dry_run",
                 "skipped_missing_images": skipped_missing_images,
+                "loss_type": str(train_config.get("loss_type", "dpo")).strip().lower(),
+                "beta": float(train_config.get("beta", 0.1)),
+                "lambda_sft": float(train_config.get("lambda_sft", 0.0)),
+                "max_weight": float(train_config.get("max_weight", 3.0)),
+                "early_stop_metric": str(train_config.get("early_stop_metric", "") or ""),
                 "weight_summary": _weight_summary(examples),
                 **audit,
                 "holdout": {
@@ -342,6 +347,24 @@ def _sft_loss_weights(examples: list[DPOExample], *, device: Any) -> Any:
 def _weighted_mean(values: Any, weights: Any) -> Any:
     denom = weights.sum().clamp_min(1e-6)
     return (values * weights).sum() / denom
+
+
+def _preference_loss_values(logits: Any, *, beta: float, loss_type: str) -> Any:
+    import torch
+
+    normalized = loss_type.strip().lower()
+    if normalized == "dpo":
+        return -torch.nn.functional.logsigmoid(beta * logits)
+    if normalized == "ipo":
+        target_margin = 1.0 / (2.0 * beta)
+        return (logits - target_margin).pow(2)
+    raise ValueError(f"Unsupported DPO loss_type: {loss_type!r}. Expected 'dpo' or 'ipo'.")
+
+
+def _ipo_target_margin(*, beta: float, loss_type: str) -> float | None:
+    if loss_type.strip().lower() != "ipo":
+        return None
+    return 1.0 / (2.0 * beta)
 
 
 def _evaluate_preference_logits(
@@ -512,8 +535,13 @@ def _train(config: dict[str, Any], *, max_samples: int | None) -> None:
     grad_accum = int(train_config.get("gradient_accumulation_steps", 16))
     epochs = int(float(train_config.get("num_train_epochs", 1)))
     beta = float(train_config.get("beta", 0.1))
+    loss_type = str(train_config.get("loss_type", "dpo")).strip().lower()
+    if loss_type not in {"dpo", "ipo"}:
+        raise ValueError(f"training.loss_type must be 'dpo' or 'ipo', got {loss_type!r}.")
+    ipo_target_margin = _ipo_target_margin(beta=beta, loss_type=loss_type)
     max_weight = float(train_config.get("max_weight", 3.0))
     lambda_sft = float(train_config.get("lambda_sft", 0.0))
+    early_stop_metric = str(train_config.get("early_stop_metric", "") or "")
     logging_steps = int(train_config.get("logging_steps", 10))
     save_steps = int(train_config.get("save_steps", 500))
     eval_steps = int(train_config.get("eval_steps", 0))
@@ -523,7 +551,7 @@ def _train(config: dict[str, Any], *, max_samples: int | None) -> None:
     batches = _iter_batches(examples, batch_size=batch_size)
     global_step = 0
     micro_step = 0
-    history: list[dict[str, float]] = []
+    history: list[dict[str, Any]] = []
     holdout_history: list[dict[str, float]] = []
     optimizer.zero_grad(set_to_none=True)
     stop_training = False
@@ -543,16 +571,16 @@ def _train(config: dict[str, Any], *, max_samples: int | None) -> None:
                 policy_rejected = _sequence_logps(policy, rejected_batch)
                 logits = (policy_chosen - policy_rejected) - (ref_chosen - ref_rejected)
                 weights = _example_weights(batch_examples, device=logits.device, max_weight=max_weight)
-                dpo_loss_values = -torch.nn.functional.logsigmoid(beta * logits)
-                dpo_loss = _weighted_mean(dpo_loss_values, weights)
-                sft_loss = torch.zeros((), device=logits.device, dtype=dpo_loss.dtype)
+                preference_loss_values = _preference_loss_values(logits, beta=beta, loss_type=loss_type)
+                preference_loss = _weighted_mean(preference_loss_values, weights)
+                sft_loss = torch.zeros((), device=logits.device, dtype=preference_loss.dtype)
                 if lambda_sft > 0:
                     token_counts = _sequence_token_counts(chosen_batch).to(policy_chosen.device)
                     chosen_nll = -policy_chosen / token_counts
                     nll_weights = weights * _sft_loss_weights(batch_examples, device=logits.device)
                     if float(nll_weights.detach().sum().cpu()) > 0:
                         sft_loss = _weighted_mean(chosen_nll, nll_weights)
-                loss = dpo_loss + lambda_sft * sft_loss
+                loss = preference_loss + lambda_sft * sft_loss
             (loss / grad_accum).backward()
             micro_step += 1
             if micro_step % grad_accum == 0 or micro_step == len(batches) * epochs:
@@ -562,12 +590,15 @@ def _train(config: dict[str, Any], *, max_samples: int | None) -> None:
                 record = {
                     "epoch": float(epoch + 1),
                     "global_step": float(global_step),
+                    "loss_type": loss_type,
                     "loss": float(loss.detach().cpu()),
-                    "dpo_loss": float(dpo_loss.detach().cpu()),
+                    "dpo_loss": float(preference_loss.detach().cpu()),
+                    "preference_loss": float(preference_loss.detach().cpu()),
                     "sft_nll_loss": float(sft_loss.detach().cpu()),
                     "chosen_logp": float(policy_chosen.detach().mean().cpu()),
                     "rejected_logp": float(policy_rejected.detach().mean().cpu()),
                     "preference_margin": float(logits.detach().mean().cpu()),
+                    "ipo_target_margin": float(ipo_target_margin) if ipo_target_margin is not None else 0.0,
                     "reference_drift": float((policy_chosen - ref_chosen).detach().abs().mean().cpu()),
                     "mean_batch_weight": float(weights.detach().mean().cpu()),
                 }
@@ -624,6 +655,12 @@ def _train(config: dict[str, Any], *, max_samples: int | None) -> None:
             {
                 "stage": "dpo_done",
                 "skipped_missing_images": skipped_missing_images,
+                "loss_type": loss_type,
+                "beta": beta,
+                "lambda_sft": lambda_sft,
+                "max_weight": max_weight,
+                "early_stop_metric": early_stop_metric,
+                "ipo_target_margin": ipo_target_margin,
                 **preference_audit,
                 "training_history": history,
                 "holdout_history": holdout_history,

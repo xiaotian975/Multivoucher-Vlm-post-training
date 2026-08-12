@@ -917,7 +917,26 @@ M2 / M3 / M3v2 平均指标对比：
 - 加强 Train-only holdout decode：不能只看 pair accuracy，还要看训练域生成式 audit accuracy 和 high-risk miss。
 - 降低对 preference margin 的依赖：DPO v2 holdout pair accuracy 为 1.0，但业务指标仍未达标，说明 pair 区分能力不等于业务泛化。
 
-### 16.4 新 DPO 验收标准
+### 16.4 AuxDPO / IPO 小规模对照
+
+当前代码已支持把 DPO v2 扩展为 `loss_type=dpo|ipo`，并保留 `lambda_sft * chosen NLL` 辅助项。推荐先跑小规模 ablation，而不是直接启动完整 sample500：
+
+| Variant | Config | 目的 |
+| --- | --- | --- |
+| DPO-v2-baseline | `configs/train/dpo_v2_baseline_ablation_qwen3vl_8b.yaml` | 独立目录复现当前保守 DPO v2 |
+| AuxDPO-v2-strong | `configs/train/dpo_v2_auxstrong_qwen3vl_8b.yaml` | 测试更强 SFT/NLL 能力保护 |
+| IPO-v1 | `configs/train/dpo_v2_ipo_qwen3vl_8b.yaml` | 测试 IPO 是否抑制 preference margin 过冲 |
+| IPO-Aux-v1 | `configs/train/dpo_v2_ipo_aux_qwen3vl_8b.yaml` | 测试 IPO + 能力保护是否更稳 |
+
+默认 dry-run 命令：
+
+```bash
+MODE=dry_run MAX_SAMPLES=8 bash scripts/05_run_dpo_v2_loss_ablation.sh
+```
+
+只有 dry-run 和小步训练通过后，才考虑对最优 1-2 个 candidate 做 Train decode dev 和 sample500。
+
+### 16.5 新 DPO 验收标准
 
 下一版 DPO 或 SFT 数据增强至少应满足：
 
@@ -1067,3 +1086,13 @@ Phase 08 M3v2：
 - 数据与 manifest：`data/mv_audit/`
 
 这些大文件不适合直接提交到 Git。当前 Git 中只归档了指标、报告、图表、error cases 和 manifest 摘要。
+
+## Phase08 Loss Ablation Baseline Partial（20260812_5gpu_ablation_r3）
+
+已先行归档第一个候选 `dpo_v2_baseline` 的训练结果，完整目录见 `docs/experiments/phase08_loss_ablation_baseline_partial_20260812_5gpu_ablation_r3/phase08_loss_ablation_baseline_partial_report.md`。
+
+| variant | status | loss_type | lambda_sft | global_step | loss | preference_loss | sft_nll_loss | preference_margin | holdout_pair_accuracy | holdout_preference_margin |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| dpo_v2_baseline | training_done_eval_not_run | dpo | 0.1000 | 40.0000 | 0.0121 | 0.0121 | 0.0000 | 44.0543 | 1.0000 | 25.7227 |
+
+说明：该候选目前只完成 DPO 训练，尚未运行 Train decode dev/sample500 推理评测，因此暂无 error cases、sample500 metrics 和错误迁移分析。服务器上的后续候选训练仍在继续。

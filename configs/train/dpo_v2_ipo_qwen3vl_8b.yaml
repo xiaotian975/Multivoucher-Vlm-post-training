@@ -18,15 +18,15 @@ data:
   train_only: true
 
 training:
-  output_dir: outputs/checkpoints/dpo/qwen3vl_8b_dpo_v2_conservative
-  metrics_output: outputs/eval_reports/phase08_dpo_v2/dpo_v2_reward_audit.json
+  output_dir: outputs/checkpoints/dpo/qwen3vl_8b_dpo_v2_ipo
+  metrics_output: outputs/eval_reports/phase08_dpo_v2_ipo/dpo_v2_reward_audit.json
   learning_rate: 1.0e-6
   num_train_epochs: 1
-  max_train_steps: 80
+  max_train_steps: 40
   per_device_train_batch_size: 1
   gradient_accumulation_steps: 16
   gradient_checkpointing: true
-  loss_type: dpo
+  loss_type: ipo
   beta: 0.1
   lambda_sft: 0.1
   max_weight: 3.0

@@ -1,0 +1,78 @@
+{
+  "run_id": "20260812_5gpu_ablation_r3",
+  "variant": "dpo_v2_baseline",
+  "archive_type": "partial_training_only",
+  "server_sources": {
+    "reward_audit": "outputs/eval_reports/phase08_dpo_v2_baseline_ablation/dpo_v2_reward_audit.json",
+    "pair_report": "data/mv_audit/dpo_v2/pair_report.json",
+    "training_log": "outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3/logs/dpo_v2_baseline_train_all_gpus.log",
+    "adapter_dir_not_copied": "outputs/checkpoints/dpo/qwen3vl_8b_dpo_v2_baseline_ablation/"
+  },
+  "missing_artifacts": [
+    "error_cases",
+    "sample500_metrics",
+    "error_migration"
+  ],
+  "files": [
+    {
+      "path": "baseline_training_summary.csv",
+      "bytes": 302,
+      "sha256": "9fc9a776015495b655dc4e3cb6255bcbc6c1d7f98c6e51c84cf73c546570be6a"
+    },
+    {
+      "path": "error_cases/README.md",
+      "bytes": 179,
+      "sha256": "c02bb21115c4b4c9ad21d54d6f5e961c3c0edbfe2f81118d5501f45554b26fdd"
+    },
+    {
+      "path": "figures/baseline_loss_curves.png",
+      "bytes": 69152,
+      "sha256": "c63c8829b4cec8c20c140de460de9e828e94cb590d759ec4b008aad96d67f84c"
+    },
+    {
+      "path": "figures/baseline_preference_margin.png",
+      "bytes": 72277,
+      "sha256": "eb7b2c116fade1ecaf65a18a0847fe1643ebe0859971e6c90f50633c6d80c9a3"
+    },
+    {
+      "path": "figures/pair_type_counts.png",
+      "bytes": 46496,
+      "sha256": "1184cb0636ab88fb825702e0884375065279efaebea610b5b9795a2a1259c392"
+    },
+    {
+      "path": "holdout_history.csv",
+      "bytes": 691,
+      "sha256": "72349bb0f30335db13852c6acd26cedc6130740826cb4688318e9aa5c2080781"
+    },
+    {
+      "path": "logs/dpo_v2_baseline_train_all_gpus.log",
+      "bytes": 7102,
+      "sha256": "ac0208f7ebf84f496722d5234950d2aafcc81be888a16f5030fccffdb25011b7"
+    },
+    {
+      "path": "phase08_loss_ablation_baseline_partial_report.md",
+      "bytes": 1604,
+      "sha256": "1bb027995febf6cde118a6b4f8a04988e39150feb2f5fdc70d23167bdf38cbc4"
+    },
+    {
+      "path": "README_APPEND.md",
+      "bytes": 889,
+      "sha256": "5e530bd4e0954da76244f768df7ae8c4ebd7646b378e510216ed975a4ad2d71e"
+    },
+    {
+      "path": "training/dpo_v2_reward_audit.json",
+      "bytes": 22441,
+      "sha256": "c889ab0c180769d26b0459f07fe081c7c34d7c3a66329321fa00b72163df1783"
+    },
+    {
+      "path": "training/pair_report.json",
+      "bytes": 1976,
+      "sha256": "ab77a91bf3128b523f88a2e9191f0731495a033b9676ec5589702fd64e146ac6"
+    },
+    {
+      "path": "training_history.csv",
+      "bytes": 7628,
+      "sha256": "2690b9765cdb2af24197c7af43a55ff81bd8594f9bef53e98d279a06ee9ccb8a"
+    }
+  ]
+}

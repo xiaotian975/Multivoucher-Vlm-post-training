@@ -1,0 +1,73 @@
+{
+  "stage": "dpo_v2_pair_build",
+  "train_only": true,
+  "source_cases": "data/mv_audit/raw_cases/main/train_cases.jsonl",
+  "source_annotations": "data/mv_audit/annotations_main/field_bboxes_train.jsonl",
+  "input_cases": 30000,
+  "outputs": {
+    "train_pairs": 3000,
+    "holdout_pairs": 300,
+    "decode_dev_rows": 152
+  },
+  "skipped": {
+    "missing_images": 18021
+  },
+  "pair_type_counts": {
+    "hard_rejected": 1170,
+    "high_risk_miss": 959,
+    "protective": 647,
+    "normal_calibration": 524
+  },
+  "primary_anomaly_type_counts": {
+    "applicant_mismatch": 330,
+    "duplicate_in_batch": 146,
+    "none": 665,
+    "over_reimbursement": 277,
+    "order_id_mismatch": 353,
+    "missing_document": 413,
+    "unreadable_image": 195,
+    "merchant_mismatch": 304,
+    "date_mismatch": 211,
+    "amount_mismatch": 406
+  },
+  "rejected_error_type_counts": {
+    "high_risk_downgrade": 739,
+    "risk_level_wrong": 744,
+    "audit_result_wrong": 334,
+    "high_risk_pass": 959,
+    "normal_over_reject": 524
+  },
+  "weight_distribution": {
+    "min": 0.75,
+    "max": 3.0,
+    "mean": 2.5057272727272877
+  },
+  "quality_pass_counts": {
+    "chosen_json_valid": 3300,
+    "rejected_json_valid": 3300,
+    "chosen_schema_valid": 3300,
+    "rejected_schema_valid": 3300,
+    "images_exist": 3300,
+    "evidence_refs_valid": 3300,
+    "bbox_range_valid": 3300
+  },
+  "case_level_split": {
+    "train_case_ids": 26800,
+    "holdout_case_ids": 3000,
+    "decode_dev_case_ids": 200,
+    "train_holdout_overlap": 0,
+    "train_decode_dev_overlap": 0,
+    "holdout_decode_dev_overlap": 0,
+    "overlap_examples": {
+      "train_holdout": [],
+      "train_decode_dev": [],
+      "holdout_decode_dev": []
+    }
+  },
+  "leakage_guard": {
+    "val_or_test_inputs_read": false,
+    "sample500_inputs_read": false,
+    "model_mined_pairs_used": false,
+    "model_mined_pairs_note": "No Train-only M2 predictions were present locally; v2 uses train_rule_generated pairs only."
+  }
+}

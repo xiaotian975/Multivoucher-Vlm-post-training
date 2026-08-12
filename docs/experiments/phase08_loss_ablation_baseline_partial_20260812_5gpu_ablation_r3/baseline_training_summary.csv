@@ -1,0 +1,2 @@
+variant,status,loss_type,lambda_sft,global_step,loss,preference_loss,sft_nll_loss,preference_margin,holdout_pair_accuracy,holdout_preference_margin
+dpo_v2_baseline,training_done_eval_not_run,dpo,0.1,40,0.012137167155742645,0.0121369119733572,2.5558924789947923e-06,44.054290771484375,1.0,25.72265625
