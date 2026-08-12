@@ -1,0 +1,32 @@
+{
+  "total_cases": 500,
+  "transition_counts": {
+    "both_correct": 411,
+    "baseline_wrong_candidate_correct": 15,
+    "both_wrong": 52,
+    "baseline_correct_candidate_wrong": 22
+  },
+  "issue_delta_candidate_minus_baseline": {
+    "audit_mismatch": 7,
+    "bbox_strict_error": -2,
+    "hallucination": 0,
+    "high_risk_miss": 7,
+    "risk_mismatch": 7,
+    "unsupported_evidence": 7
+  },
+  "audit_accuracy": {
+    "baseline": 0.866,
+    "candidate": 0.852,
+    "delta": -0.014000000000000012,
+    "baseline_bootstrap_se": 0.01511621645783099,
+    "candidate_bootstrap_se": 0.015299738888303015
+  },
+  "high_risk_miss_rate": {
+    "baseline": 0.15192743764172337,
+    "candidate": 0.16780045351473924,
+    "delta": 0.015873015873015872,
+    "baseline_bootstrap_se": 0.01667032307989953,
+    "candidate_bootstrap_se": 0.01727943823161207
+  },
+  "leakage_note": "This script is for frozen evaluation outputs only; do not use Val/Test transitions to build DPO v2 training pairs."
+}

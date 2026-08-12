@@ -1,0 +1,30 @@
+{
+  "test_clean": {
+    "final_path": "outputs/predictions/phase08_m3v2_sample500/m3v2_dpo/test_clean.jsonl",
+    "final_rows": 500,
+    "missing": 0,
+    "extra": 0,
+    "duplicates_seen_before_dedup": 0
+  },
+  "test_robust": {
+    "final_path": "outputs/predictions/phase08_m3v2_sample500/m3v2_dpo/test_robust.jsonl",
+    "final_rows": 500,
+    "missing": 0,
+    "extra": 0,
+    "duplicates_seen_before_dedup": 0
+  },
+  "test_unseen_template": {
+    "final_path": "outputs/predictions/phase08_m3v2_sample500/m3v2_dpo/test_unseen_template.jsonl",
+    "final_rows": 500,
+    "missing": 0,
+    "extra": 0,
+    "duplicates_seen_before_dedup": 0
+  },
+  "test_hard_negative": {
+    "final_path": "outputs/predictions/phase08_m3v2_sample500/m3v2_dpo/test_hard_negative.jsonl",
+    "final_rows": 500,
+    "missing": 0,
+    "extra": 0,
+    "duplicates_seen_before_dedup": 0
+  }
+}

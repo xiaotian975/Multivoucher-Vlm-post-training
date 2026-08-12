@@ -1,0 +1,190 @@
+{
+  "experiment": "phase08_m3v2_sample500",
+  "run_id": "20260811_232246",
+  "collected_at": "2026-08-12T13:47:36",
+  "server_project_path": "/root/autodl-tmp/VLM-Post-Training",
+  "server_artifact_paths": {
+    "dpo_v2_checkpoint": "outputs/checkpoints/dpo/qwen3vl_8b_dpo_v2_conservative_20260811_232246/",
+    "sample500_predictions": "outputs/predictions/phase08_m3v2_sample500/",
+    "runtime": "outputs/runtime/dpo_v2_run/20260811_232246/",
+    "eval_reports": "outputs/eval_reports/phase08_m3v2_sample500/"
+  },
+  "git_boundary": "No checkpoints, full predictions, images, or raw long logs are included.",
+  "files": [
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/dpo_v2/dpo_v2_holdout_history.csv",
+      "size_bytes": 1102,
+      "sha256": "26a9f0be3ad186c5c4880b4b6407743fd1043034f5a471b2fa93372c47f407f1"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/dpo_v2/dpo_v2_reward_audit.json",
+      "size_bytes": 35304,
+      "sha256": "1b9dfd1ef61a7efe52a5e3c1a48de0680024471c6567606bb994608c395803f6"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/dpo_v2/dpo_v2_training_history.csv",
+      "size_bytes": 12873,
+      "sha256": "087d19b3fd5568911c2a6ca5b02e27aa8a242482c8811a137ed149d6d51c7fc3"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/dpo_v2/pair_report.json",
+      "size_bytes": 1976,
+      "sha256": "ab77a91bf3128b523f88a2e9191f0731495a033b9676ec5589702fd64e146ac6"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/error_cases/m3v2_dpo_test_clean_errors.jsonl",
+      "size_bytes": 83276,
+      "sha256": "22f890649c5f8eec47b8ff4b87c6c0789e94ce99b156e6c438a346ebd1693ce0"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/error_cases/m3v2_dpo_test_hard_negative_errors.jsonl",
+      "size_bytes": 36356,
+      "sha256": "d675cbba122b74e74cbe95daa66c3da98663ddcbe8ea0aca85dbd7c3cc0a7d31"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/error_cases/m3v2_dpo_test_robust_errors.jsonl",
+      "size_bytes": 80194,
+      "sha256": "5f050626861c0a55abce02d0b9c916be04266ebca36527f80f53c0a8be4b4158"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/error_cases/m3v2_dpo_test_unseen_template_errors.jsonl",
+      "size_bytes": 75161,
+      "sha256": "906cdbfb963f42ead6ac10ae5d0376810297e112da5eabc1a018a52549a25d0c"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/error_migration/all_splits_transition_summary.json",
+      "size_bytes": 4449,
+      "sha256": "78ec0ddbc62a845ea95eabdd7c8a72fc43dc0db873ab55f9a342ce60ea97de88"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/error_migration/test_clean_case_transitions.csv",
+      "size_bytes": 50384,
+      "sha256": "647261b7e0ec473fc16e0654982dd647c9e96df47bb6567fd7433f1e765b1201"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/error_migration/test_clean_transition_summary.json",
+      "size_bytes": 1024,
+      "sha256": "dbb7f284d4ea1d5b7646b683bc06903997c7b4586d19145a52eb50b082a951a3"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/error_migration/test_hard_negative_case_transitions.csv",
+      "size_bytes": 51263,
+      "sha256": "f4bd8bb966c80143e4b5a052ce5003789d7e850bf18f2d8d53d57a169558f60c"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/error_migration/test_hard_negative_transition_summary.json",
+      "size_bytes": 984,
+      "sha256": "723e902b265957268b8cca9f4ca43ae75a42887be3c072ec76d0579ed99f803c"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/error_migration/test_robust_case_transitions.csv",
+      "size_bytes": 49549,
+      "sha256": "eadf8877d8637f796350ac31d70d76af24045e15d5edd310b03ba6d128a39607"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/error_migration/test_robust_transition_summary.json",
+      "size_bytes": 1049,
+      "sha256": "69eecb57645ac3f40328f6836a17fe08a26631d2f8d7f29556320e808801ab07"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/error_migration/test_unseen_template_case_transitions.csv",
+      "size_bytes": 52426,
+      "sha256": "08bcee83fddf13a0231a58bcd56e32fafa11a956114cd3ebea3f19ea5fc9a9ef"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/error_migration/test_unseen_template_transition_summary.json",
+      "size_bytes": 1044,
+      "sha256": "cd1dad0c5be53fca7a6998d46cc5e96840317ee1ab53571d4bd4a1d5ede4d45e"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/figures/dpo_v2_training_curves.png",
+      "size_bytes": 155424,
+      "sha256": "693d78d2443776fd77d319d8de981a177a66c18ba05fdc377f1dae226d0efa96"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/figures/m2_m3_m3v2_core_metrics.png",
+      "size_bytes": 64608,
+      "sha256": "ad6f13e5944c74188728a600c476d439f8bc78ef8e41ff123c59f8db591f3cad"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/figures/m2_m3v2_error_transitions.png",
+      "size_bytes": 73080,
+      "sha256": "eeccc73a0fd1ed88d6250b0cfb9e882b17565a2ef9bb83c5688f78964faf7975"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/figures/m3v2_error_cases.png",
+      "size_bytes": 62736,
+      "sha256": "be2f01afb9d840de5a023e71fd79e13e0112b122253c3077ec67a59c48d3631d"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/figures/m3v2_split_metrics.png",
+      "size_bytes": 71177,
+      "sha256": "31f4b30b96ac200ea4ea1c1fbba312d97f2eff0019102c1338352c9ac0e11083"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/m2_m3_m3v2_split_metrics.csv",
+      "size_bytes": 2039,
+      "sha256": "92c2527a2f1789bbc81903f0556717f66d4f6fcd8d77e8d4efba2eaf1e4481b1"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/m2_m3v2_transition_summary.csv",
+      "size_bytes": 689,
+      "sha256": "c1b9aa21f459f4eb2605d7ec441d5fc69df9123e232bab126c76d7e3d201b414"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/merge_summary.json",
+      "size_bytes": 873,
+      "sha256": "513963a7cfe4806dfff30ddc0fc90cb4caf6ec2ee03c4ade9d68799ea20036fd"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/metrics_by_model.csv",
+      "size_bytes": 654,
+      "sha256": "78ebf573563cfd5cf5dee550d3ee4339b761ff5cb077d5922de143d727066098"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/metrics_json/m3v2_dpo_test_clean_metrics.json",
+      "size_bytes": 590,
+      "sha256": "56a5fe479943023e70a008ac968e6c9f41341c2974b1af0597f927e3134b9447"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/metrics_json/m3v2_dpo_test_hard_negative_metrics.json",
+      "size_bytes": 605,
+      "sha256": "b9a61cb67c3b4bab26fd36df24b57919c930973851b1962ffbd72029fb068f3a"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/metrics_json/m3v2_dpo_test_robust_metrics.json",
+      "size_bytes": 604,
+      "sha256": "cedca94691de0ba256128ee092ada1572b794dc5181f55c5f4febf8a8ae66dfd"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/metrics_json/m3v2_dpo_test_unseen_template_metrics.json",
+      "size_bytes": 606,
+      "sha256": "08c628f70a76d24160f48fa331c345220eeb77be0dbf8dfe2458fe80670fc412"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/metrics_summary.csv",
+      "size_bytes": 848,
+      "sha256": "bb0d03252a238366b37b7f3554d3473dedc943570a3f07fa6b0e41322c2c6e87"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/phase08_m3v2_sample500_report.md",
+      "size_bytes": 5065,
+      "sha256": "9a23be26abf5f55aa8522e4f1516b95af81ace35364aed03f98d15e23c996294"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/train_decode_dev/m3v2_dpo_train_decode_dev_errors.jsonl",
+      "size_bytes": 3875,
+      "sha256": "29c732f73ad6a591bedd22a72909dcd73f667c1f0ecff6672e44736f46740eab"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/train_decode_dev/m3v2_dpo_train_decode_dev_metrics.json",
+      "size_bytes": 564,
+      "sha256": "0ef3850b5076e4c6d4142e817e9b01efa99725fee63343f431b7bb7e8eae6785"
+    },
+    {
+      "path": "docs/experiments/phase08_m3v2_sample500/train_decode_dev/metrics_summary.csv",
+      "size_bytes": 351,
+      "sha256": "e46eda50c0cc60cc9f421f6647f9d77a6cdc5d57caef5e7c51017ce1e51162ff"
+    }
+  ]
+}

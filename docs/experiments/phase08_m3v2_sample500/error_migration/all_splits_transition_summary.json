@@ -1,0 +1,135 @@
+{
+  "test_clean": {
+    "total_cases": 500,
+    "transition_counts": {
+      "both_wrong": 124,
+      "both_correct": 363,
+      "baseline_wrong_candidate_correct": 4,
+      "baseline_correct_candidate_wrong": 9
+    },
+    "issue_delta_candidate_minus_baseline": {
+      "audit_mismatch": -3,
+      "bbox_strict_error": 5,
+      "business_metrics_zeroed": 8,
+      "high_risk_miss": -3,
+      "risk_mismatch": -3,
+      "schema_invalid": 8,
+      "unsupported_evidence": -3
+    },
+    "audit_accuracy": {
+      "baseline": 0.744,
+      "candidate": 0.734,
+      "delta": -0.010000000000000009,
+      "baseline_bootstrap_se": 0.018843326531530202,
+      "candidate_bootstrap_se": 0.021129892612340592
+    },
+    "high_risk_miss_rate": {
+      "baseline": 0.26956521739130435,
+      "candidate": 0.28405797101449276,
+      "delta": 0.014492753623188415,
+      "baseline_bootstrap_se": 0.025394045721623824,
+      "candidate_bootstrap_se": 0.024613464688881155
+    },
+    "leakage_note": "This script is for frozen evaluation outputs only; do not use Val/Test transitions to build DPO v2 training pairs."
+  },
+  "test_robust": {
+    "total_cases": 500,
+    "transition_counts": {
+      "both_wrong": 122,
+      "both_correct": 363,
+      "baseline_correct_candidate_wrong": 8,
+      "baseline_wrong_candidate_correct": 7
+    },
+    "issue_delta_candidate_minus_baseline": {
+      "audit_mismatch": -2,
+      "bbox_strict_error": -14,
+      "business_metrics_zeroed": 3,
+      "hallucination": -2,
+      "high_risk_miss": -2,
+      "risk_mismatch": -2,
+      "schema_invalid": 3,
+      "unsupported_evidence": -3
+    },
+    "audit_accuracy": {
+      "baseline": 0.742,
+      "candidate": 0.74,
+      "delta": -0.0020000000000000018,
+      "baseline_bootstrap_se": 0.020555110381948107,
+      "candidate_bootstrap_se": 0.019454301561511577
+    },
+    "high_risk_miss_rate": {
+      "baseline": 0.2756598240469208,
+      "candidate": 0.2785923753665689,
+      "delta": 0.0029325513196480912,
+      "baseline_bootstrap_se": 0.024225360412911973,
+      "candidate_bootstrap_se": 0.02648791886386834
+    },
+    "leakage_note": "This script is for frozen evaluation outputs only; do not use Val/Test transitions to build DPO v2 training pairs."
+  },
+  "test_unseen_template": {
+    "total_cases": 500,
+    "transition_counts": {
+      "both_wrong": 121,
+      "both_correct": 358,
+      "baseline_wrong_candidate_correct": 8,
+      "baseline_correct_candidate_wrong": 13
+    },
+    "issue_delta_candidate_minus_baseline": {
+      "audit_mismatch": 3,
+      "bbox_strict_error": 5,
+      "business_metrics_zeroed": 2,
+      "hallucination": 0,
+      "high_risk_miss": 3,
+      "risk_mismatch": 3,
+      "schema_invalid": 2,
+      "unsupported_evidence": 3
+    },
+    "audit_accuracy": {
+      "baseline": 0.742,
+      "candidate": 0.732,
+      "delta": -0.010000000000000009,
+      "baseline_bootstrap_se": 0.01875776288211655,
+      "candidate_bootstrap_se": 0.019387586040100827
+    },
+    "high_risk_miss_rate": {
+      "baseline": 0.27350427350427353,
+      "candidate": 0.28774928774928776,
+      "delta": 0.014245014245014231,
+      "baseline_bootstrap_se": 0.025240759074001785,
+      "candidate_bootstrap_se": 0.024367979173786407
+    },
+    "leakage_note": "This script is for frozen evaluation outputs only; do not use Val/Test transitions to build DPO v2 training pairs."
+  },
+  "test_hard_negative": {
+    "total_cases": 500,
+    "transition_counts": {
+      "both_correct": 411,
+      "baseline_wrong_candidate_correct": 15,
+      "both_wrong": 52,
+      "baseline_correct_candidate_wrong": 22
+    },
+    "issue_delta_candidate_minus_baseline": {
+      "audit_mismatch": 7,
+      "bbox_strict_error": -2,
+      "hallucination": 0,
+      "high_risk_miss": 7,
+      "risk_mismatch": 7,
+      "unsupported_evidence": 7
+    },
+    "audit_accuracy": {
+      "baseline": 0.866,
+      "candidate": 0.852,
+      "delta": -0.014000000000000012,
+      "baseline_bootstrap_se": 0.01511621645783099,
+      "candidate_bootstrap_se": 0.015299738888303015
+    },
+    "high_risk_miss_rate": {
+      "baseline": 0.15192743764172337,
+      "candidate": 0.16780045351473924,
+      "delta": 0.015873015873015872,
+      "baseline_bootstrap_se": 0.01667032307989953,
+      "candidate_bootstrap_se": 0.01727943823161207
+    },
+    "leakage_note": "This script is for frozen evaluation outputs only; do not use Val/Test transitions to build DPO v2 training pairs."
+  }
+}

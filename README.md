@@ -1,6 +1,6 @@
 # MultiVoucher-Audit
 
-更新时间：2026-08-11
+更新时间：2026-08-12
 本文是一份完整的工程项目报告，集中说明 MultiVoucher-Audit 的背景、任务定义、数据集、方法路线、创新点、Phase 00 到 Phase 08 的工程状态、训练状态、验证状态、测试状态、超参数、实验结果和失败原因。
 
 ## 0. 阅读说明
@@ -9,8 +9,8 @@
 
 - `Phase 00-06` 主要是工程、数据、渲染、训练数据格式和评测系统准备，不产生真实模型训练指标。
 - `Phase 07` 是真实 LoRA-SFT 训练、验证 loss、M0/M1/M2 抽样推理与业务评测。
-- `Phase 08` 已完成 DPO sample1000 训练和 M3 sample500 推理评测，但未完成正式 GRPO、M4 评测和完整 M2/M3/M4 对比。
-- 服务器已经关闭。本文只基于本地已归档到 Git 的可信材料和项目文档，不复制模型权重、不复制全量 predictions、不复制原始训练日志。
+- `Phase 08` 已完成 DPO v1、M3 sample500、DPO v2 修正实验和 M3v2 sample500 推理评测，但未完成正式 GRPO、M4 评测和完整 M2/M3/M4 对比。
+- Git 中只归档指标、报告、图表、error cases 和 manifest 摘要；不复制模型权重、不复制全量 predictions、不复制原始训练日志。
 
 ## 1. 项目前后背景与研究动机
 
@@ -708,7 +708,35 @@ M3 merge 校验结果：
 | test_unseen_template | 500 | 0 | 0 |
 | test_hard_negative | 500 | 0 | 0 |
 
-### 13.2 M3 分 split 指标
+### 13.2 8 卡分片推理执行记录
+
+Phase 08 的 M3 sample500 推理最初按 `4 split x 1 GPU` 启动，即 `test_clean/test_robust/test_unseen_template/test_hard_negative` 四个 split 各占一张卡，GPU 0-3 运行，GPU 4-7 空闲。由于 sample500 推理仍需要数小时，并且服务器按时计费，后续将推理调度改为 8 卡 shard 数据并行，以提高 GPU 利用率并减少等待时间。
+
+这次 8 卡方案不是 DDP、FSDP、ZeRO、Pipeline Parallel 或 3D Parallel 形式的分布式训练。原因是当时主要瓶颈已经从 DPO/SFT 的反向传播训练转为自回归生成推理，样本之间天然独立，不需要梯度同步；直接把 case 按 shard 切分给多个独立 worker，更符合当前 evaluator、JSONL 落盘和 `case_id` 断点续跑机制。相较于临时改造训练框架，shard 数据并行的工程风险更低，能更快把空闲 GPU 转化为有效吞吐。
+
+实际执行流程如下：
+
+| 步骤 | 处理方式 |
+| --- | --- |
+| 停止旧任务 | 停止原 `4 split x 1 GPU` 的 M3 推理 worker，保留已经生成的 partial predictions 和日志 |
+| 生成 shard | 读取每个 split 的 sample500 manifest 与已完成 `case_id`，只对未完成样本做二分片 |
+| 调度 GPU | 生成 `4 split x 2 shard = 8` 个独立任务，每个 worker 通过 `CUDA_VISIBLE_DEVICES=0..7` 独占一张 GPU |
+| 独立落盘 | 每个 shard 写自己的 prediction JSONL 和日志，避免多个进程并发写同一个文件 |
+| 合并预测 | 全部 shard 完成后，按原 sample manifest 顺序合并为标准 split 文件 |
+| 自动评测 | 合并校验通过后运行 `scripts/08_evaluate.sh`，生成 `metrics_summary.csv`、metrics JSON 和 error cases |
+
+最终标准预测文件仍保持 Phase 08 约定路径：
+
+- `outputs/predictions/phase08_m3_sample500/m3_dpo/test_clean.jsonl`
+- `outputs/predictions/phase08_m3_sample500/m3_dpo/test_robust.jsonl`
+- `outputs/predictions/phase08_m3_sample500/m3_dpo/test_unseen_template.jsonl`
+- `outputs/predictions/phase08_m3_sample500/m3_dpo/test_hard_negative.jsonl`
+
+合并摘要归档在 `docs/experiments/phase08_m3_sample500/merge_summary.json`。四个 split 最终均为 `500/500`，`missing=0`，`duplicates_seen_before_dedup=0`。这说明 8 卡 shard 调度没有造成样本缺失、重复或评测口径污染。
+
+这次经验也形成了后续服务器使用原则：对于 sample500/sampleN 这类评测推理，优先使用多 worker shard 数据并行，把每张 GPU 分配给独立样本队列；对于真正的 DPO/SFT 训练，如果要进一步提高多卡利用率，需要单独引入 `accelerate`、DeepSpeed 或 FSDP 等训练框架改造，不能把推理侧的 shard 并行直接等同于多卡分布式训练。
+
+### 13.3 M3 分 split 指标
 
 | Split | JSON Validity | Schema Compliance | Field EM | Risk Type Macro-F1 | Audit Accuracy | High-risk Miss Rate | Evidence Support Rate | Hallucination Rate | BBox Acc Relaxed | Error Cases |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -717,7 +745,7 @@ M3 merge 校验结果：
 | test_unseen_template | 1.000 | 0.868 | 0.867 | 0.750 | 0.634 | 0.276 | 0.778 | 0.001 | 0.766 | 231 |
 | test_hard_negative | 1.000 | 1.000 | 1.000 | 0.641 | 0.738 | 0.145 | 0.966 | 0.001 | 0.957 | 183 |
 
-### 13.3 M2 与 M3 平均指标对比
+### 13.4 M2 与 M3 平均指标对比
 
 | Model | JSON Validity | Schema Compliance | Field EM | Risk Type Macro-F1 | Audit Accuracy | High-risk Miss Rate | Evidence Support Rate | Hallucination Rate | BBox Acc Relaxed | Error Cases Avg |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -725,7 +753,7 @@ M3 merge 校验结果：
 | M3 SFT+DPO | 1.000 | 0.870 | 0.869 | 0.753 | 0.668 | 0.237 | 0.799 | 0.001 | 0.790 | 211.0 |
 | Delta M3-M2 | 0.000 | -0.007 | -0.007 | +0.010 | -0.105 | -0.005 | -0.005 | +0.001 | -0.004 | +46.5 |
 
-### 13.4 Phase 08 当前验收状态
+### 13.5 Phase 08 当前验收状态
 
 | 子任务 | 状态 | 说明 |
 | --- | --- | --- |
@@ -834,38 +862,64 @@ M3 在四个 split 的 Audit Accuracy 全部下降。这不像单一 split 偶�
 
 当前 DPO 主要记录训练动态和 reward audit，缺少独立的 Train 内 holdout pair 监控。如果只看训练 loss 或 preference margin，容易误判为成功。
 
-## 16. 后续改进建议
+## 16. DPO v2 修正实验与后续建议
 
-### 16.1 暂停 GRPO/M4
+### 16.1 DPO v2 / M3v2 已完成结果
 
-不建议基于当前 M3 结果继续扩大 GRPO。原因：
+DPO v2 已按 Train-only 原则完成一次保守修正实验，并完成 M3v2 sample500 推理评测。完整归档见 `docs/experiments/phase08_m3v2_sample500/`。
 
-- DPO 业务指标已经失败。
-- GRPO 如果从不稳定的 M3 出发，可能会放大错误审计边界。
+| 项目 | 结果 |
+| --- | --- |
+| DPO v2 train pairs | 3000 |
+| DPO v2 holdout pairs | 300 |
+| Train decode dev rows | 152 |
+| case-level overlap | train/holdout/decode-dev 均为 0 |
+| DPO v2 final step | 80 |
+| final train loss | 0.00398 |
+| final preference margin | 55.60 |
+| final holdout pair accuracy | 1.0 |
+| M3v2 sample500 | 4 splits × 500，全部完成 |
+
+M3v2 四个 split 的核心指标如下：
+
+| Split | Audit Accuracy | High-risk Miss Rate | Evidence Support Rate | Error Cases |
+| --- | ---: | ---: | ---: | ---: |
+| test_clean | 0.734 | 0.284 | 0.731 | 186 |
+| test_robust | 0.740 | 0.279 | 0.722 | 165 |
+| test_unseen_template | 0.732 | 0.288 | 0.767 | 183 |
+| test_hard_negative | 0.852 | 0.168 | 0.961 | 131 |
+
+M2 / M3 / M3v2 平均指标对比：
+
+| Model | Audit Accuracy | High-risk Miss Rate | Evidence Support Rate | Error Cases Avg |
+| --- | ---: | ---: | ---: | ---: |
+| M2 LoRA-SFT | 0.773 | 0.243 | 0.804 | 164.5 |
+| M3 DPO v1 | 0.668 | 0.237 | 0.799 | 211.0 |
+| M3v2 DPO v2 | 0.764 | 0.255 | 0.795 | 166.3 |
+
+结论：DPO v2 明显修复了 DPO v1 对 Audit Accuracy 的破坏，error cases 基本回到 M2 水平；但 High-risk Miss Rate 没有下降，反而从 M2 的 `0.243` 升到 `0.255`。因此 DPO v2 是“部分修复”，不是最终成功。
+
+### 16.2 暂停 GRPO/M4
+
+仍不建议基于当前 M3v2 结果继续扩大 GRPO。原因：
+
+- M3v2 虽然比 M3 稳定，但核心目标 High-risk Miss Rate 没有改善。
+- GRPO 如果从仍然漏检高风险的模型出发，可能会放大错误审计边界。
 - 当前 GRPO 只有 smoke 级别产物，不应写成正式实验结果。
 
-### 16.2 重构 DPO v2 pairs
+### 16.3 后续 DPO v3 或数据增强方向
 
-DPO v2 应只从 MV-Train 构造，不从 Val/Test 反向调参。建议加入：
+如果继续走偏好优化路线，下一轮不应简单加大 DPO 训练，而应围绕 high-risk miss 重新设计 Train-only 数据：
 
-- hard rejected：结构合法、证据看似完整，但 `audit_result` 或 `risk_level` 错误。
-- high-risk miss 强化 pair：高风险样本错误放行、错误降级为中低风险。
-- 保护型 pair：保护 M2 已经做对的高风险拒绝样本，尤其是 `amount_mismatch`、`over_reimbursement`、`order_id_mismatch`。
-- 重复控制：限制同一 case 和同一 rejected type 的过高占比，避免模型过拟合单一偏好模式。
-
-### 16.3 降低 DPO 训练强度
-
-建议新 DPO 使用更保守配置：
-
-- 更小 learning rate，例如 `1e-6` 或 `2e-6`。
-- 更低 beta，例如 `0.05`。
-- 更少 step 或 early stopping。
-- 加入 Train 内 holdout pairs。
-- 不以 loss 接近 0 作为成功标准，而以 holdout preference 和 sample500 业务指标为准。
+- 构造更强的 high-risk miss hard cases：尤其是高风险被放行、降级、或证据存在但审计结论错误的样本。
+- 增加 protective pair 的精度：保护 M2 已经正确拒绝的高风险样本，同时避免把正常样本推向过度拒绝。
+- 区分“证据不足应人工复核”和“证据充分应拒绝”的 chosen 策略，避免模型把高风险统一转成模糊复核。
+- 加强 Train-only holdout decode：不能只看 pair accuracy，还要看训练域生成式 audit accuracy 和 high-risk miss。
+- 降低对 preference margin 的依赖：DPO v2 holdout pair accuracy 为 1.0，但业务指标仍未达标，说明 pair 区分能力不等于业务泛化。
 
 ### 16.4 新 DPO 验收标准
 
-新 DPO 版本至少应满足：
+下一版 DPO 或 SFT 数据增强至少应满足：
 
 - Audit Accuracy 不低于 M2，或下降不超过 `0.01`。
 - High-risk Miss Rate 相比 M2 至少下降 `0.03`。
@@ -873,7 +927,7 @@ DPO v2 应只从 MV-Train 构造，不从 Val/Test 反向调参。建议加入�
 - Hallucination Rate 保持低位，不明显上升。
 - Error Cases Avg 不高于 M2。
 
-如果新 DPO 仍无法同时改善 High-risk Miss Rate 和 Audit Accuracy，应停止继续堆 DPO/GRPO，把 Phase08 结论写成 `DPO negative result / reward-data mismatch`，后续重点转向偏好数据质量、审计规则和训练样本构造。
+如果下一轮仍无法同时改善 High-risk Miss Rate 和 Audit Accuracy，应停止继续堆 DPO/GRPO，把 Phase08 结论写成 `DPO negative result / reward-data mismatch`，后续重点转向 SFT 高风险数据增强、审计规则约束和输出后处理。
 
 ## 17. 工程完成情况、未完成任务与修改方向
 
@@ -894,6 +948,8 @@ DPO v2 应只从 MV-Train 构造，不从 Val/Test 反向调参。建议加入�
 | DPO 训练 | 完成 DPO sample1000 adapter | `outputs/checkpoints/dpo/qwen3vl_8b_dpo_from_existing_epoch1/` |
 | M3 测试 | 完成 M3 sample500 评测和 M2/M3 对比 | `docs/experiments/phase08_m3_sample500/` |
 | 失败诊断 | 完成 DPO negative result 分析 | `docs/experiments/phase08_dpo_diagnosis/` |
+| DPO v2 修正 | 完成 Train-only DPO v2 pair 构造、训练和 holdout 监控 | `docs/experiments/phase08_m3v2_sample500/dpo_v2/` |
+| M3v2 测试 | 完成 M3v2 sample500 评测、error cases、错误迁移和图表 | `docs/experiments/phase08_m3v2_sample500/` |
 
 ### 17.2 未完成任务
 
@@ -901,9 +957,9 @@ DPO v2 应只从 MV-Train 构造，不从 Val/Test 反向调参。建议加入�
 | --- | --- | --- |
 | 全量 Phase 07 | 当前正式报告采用 sample500，不是完整 24000 条全量评测 | 如果预算允许，后续可补全量或扩大抽样 |
 | 数据完整备份 | 全量 predictions、checkpoint、原始日志仍在服务器侧，不在 Git | 释放服务器前需重新开机打包备份 |
-| DPO v2 | 当前 DPO v1 业务失败，尚未重构 pair 数据 | 优先做 Train-only DPO v2 |
+| DPO v3 或高风险增强 | DPO v2 已部分修复 M3，但 High-risk Miss Rate 未改善 | 优先围绕 high-risk miss 重构 Train-only hard cases |
 | GRPO/M4 | GRPO 只有 smoke 产物，M4 未正式训练和评测 | 当前先暂停，不建议继续烧钱 |
-| 最终实验报告 | 尚无 M2/M3/M4 完整最终对比 | 等 DPO v2 或 M4 有结果后再补 |
+| 最终实验报告 | 已有 M2/M3/M3v2 对比，但尚无 M4 正式结果 | 等 high-risk miss 路线稳定或 M4 有结果后再补 |
 | 真实数据验证 | 当前是合成数据闭环，没有真实企业数据外部验证 | 后续可做小规模真实/半真实样例测试 |
 
 ### 17.3 修改方向优先级
@@ -912,7 +968,7 @@ DPO v2 应只从 MV-Train 构造，不从 Val/Test 反向调参。建议加入�
 | --- | --- | --- | --- |
 | P0 | 备份服务器大文件 | 如需释放服务器，先备份 SFT/DPO adapter、predictions、logs、runtime | 保证实验可复现 |
 | P1 | DPO 失败归因深化 | 继续分析 `M2 correct -> M3 wrong` 的具体输出差异 | 找出 DPO 破坏审计边界的机制 |
-| P1 | DPO v2 pair 重构 | 增加 hard rejected、保护型 pair、high-risk miss 强化 pair | 降低高风险漏检且不损伤 Audit Accuracy |
+| P1 | DPO v3 pair 重构 | 围绕 high-risk miss 增加更难的 Train-only hard cases | 降低高风险漏检且不损伤 Audit Accuracy |
 | P1 | DPO 训练降强度 | 降低 lr/beta/step，加入 early stopping 和 Train holdout | 防止 preference margin 过度拉大 |
 | P2 | SFT 数据增强 | 针对高风险金额、超额报销、订单号不一致补充样本 | 提升 M2 本身的高风险稳定性 |
 | P2 | 规则/后处理辅助 | 对高风险放行、缺材料、不可读字段加轻量校验 | 提供保底安全约束 |
@@ -920,17 +976,18 @@ DPO v2 应只从 MV-Train 构造，不从 Val/Test 反向调参。建议加入�
 
 ### 17.4 下一步最推荐路线
 
-最推荐的下一步不是继续训练 GRPO，而是先做一个成本较低、可解释的 DPO v2 迭代：
+最推荐的下一步不是继续训练 GRPO，而是在 DPO v2 结果基础上做更聚焦的 high-risk miss 修正：
 
 ```text
-M2/M3 error transition analysis
--> Train-only DPO v2 pair policy
--> small DPO v2 training with conservative hyperparameters
--> M3v2 sample500 evaluation
--> compare M2 / M3 / M3v2
+M2/M3/M3v2 error transition analysis
+-> mine analogous Train-only high-risk miss cases
+-> DPO v3 or SFT high-risk data augmentation
+-> conservative small training
+-> sample500 evaluation
+-> compare M2 / M3 / M3v2 / candidate
 ```
 
-如果 M3v2 仍不能同时守住 Audit Accuracy 和降低 High-risk Miss Rate，应停止 DPO 路线，把项目结论写成“当前偏好数据和 reward 构造与业务指标存在错配”，转向 SFT 数据增强和规则约束。
+如果下一轮仍不能同时守住 Audit Accuracy 和降低 High-risk Miss Rate，应停止 DPO 路线，把项目结论写成“当前偏好数据和 reward 构造与业务指标存在错配”，转向 SFT 数据增强和规则约束。
 
 ## 18. 可供后续分析的问题清单
 
@@ -981,14 +1038,31 @@ DPO 诊断：
 - `docs/experiments/phase08_dpo_diagnosis/transition_summary.csv`
 - `docs/experiments/phase08_dpo_diagnosis/figures/`
 
+Phase 08 M3v2：
+
+- `docs/experiments/phase08_m3v2_sample500/phase08_m3v2_sample500_report.md`
+- `docs/experiments/phase08_m3v2_sample500/metrics_summary.csv`
+- `docs/experiments/phase08_m3v2_sample500/metrics_by_model.csv`
+- `docs/experiments/phase08_m3v2_sample500/m2_m3_m3v2_split_metrics.csv`
+- `docs/experiments/phase08_m3v2_sample500/m2_m3v2_transition_summary.csv`
+- `docs/experiments/phase08_m3v2_sample500/merge_summary.json`
+- `docs/experiments/phase08_m3v2_sample500/dpo_v2/`
+- `docs/experiments/phase08_m3v2_sample500/error_cases/`
+- `docs/experiments/phase08_m3v2_sample500/error_migration/`
+- `docs/experiments/phase08_m3v2_sample500/figures/`
+
 ## 20. 服务器产物状态
 
-以下产物没有进入 Git，只保留在服务器侧路径中。服务器已关闭，如果后续释放实例或删除数据盘，需要先开机备份：
+以下产物没有进入 Git，只保留在服务器侧路径中。如果后续释放实例或删除数据盘，需要先打包备份：
 
 - SFT adapter：`outputs/checkpoints/sft/qwen3vl_8b_lora_existing_epoch1/`
 - DPO adapter：`outputs/checkpoints/dpo/qwen3vl_8b_dpo_from_existing_epoch1/`
+- DPO v2 adapter：`outputs/checkpoints/dpo/qwen3vl_8b_dpo_v2_conservative_20260811_232246/`
 - Phase 07 predictions：`outputs/predictions/phase07_sample500/`
 - Phase 08 M3 predictions：`outputs/predictions/phase08_m3_sample500/`
+- Phase 08 M3v2 predictions：`outputs/predictions/phase08_m3v2_sample500/`
+- Phase 08 M3v2 runtime：`outputs/runtime/dpo_v2_run/20260811_232246/`
+- Phase 08 M3v2 eval reports：`outputs/eval_reports/phase08_m3v2_sample500/`、`outputs/eval_reports/phase08_m3v2_error_migration/`
 - 训练日志和 runtime shard 日志：`outputs/logs/`、`outputs/runtime/`
 - 数据与 manifest：`data/mv_audit/`
 
