@@ -1,0 +1,86 @@
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:01<00:05,  1.94s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:03<00:03,  1.92s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:05<00:01,  1.96s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:06<00:00,  1.59s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:06<00:00,  1.72s/it]
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_004895", "completed": 75, "total": 152, "elapsed_seconds": 72.597}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_030953", "completed": 76, "total": 152, "elapsed_seconds": 60.442}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_015377", "completed": 77, "total": 152, "elapsed_seconds": 61.949}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_016083", "completed": 78, "total": 152, "elapsed_seconds": 61.519}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_017428", "completed": 79, "total": 152, "elapsed_seconds": 60.185}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_006820", "completed": 80, "total": 152, "elapsed_seconds": 61.035}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_029082", "completed": 81, "total": 152, "elapsed_seconds": 77.734}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_011375", "completed": 82, "total": 152, "elapsed_seconds": 74.637}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_018872", "completed": 83, "total": 152, "elapsed_seconds": 59.179}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_011646", "completed": 84, "total": 152, "elapsed_seconds": 60.074}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_000475", "completed": 85, "total": 152, "elapsed_seconds": 77.053}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_030118", "completed": 86, "total": 152, "elapsed_seconds": 67.872}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_028767", "completed": 87, "total": 152, "elapsed_seconds": 61.487}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_012203", "completed": 88, "total": 152, "elapsed_seconds": 60.356}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_004701", "completed": 89, "total": 152, "elapsed_seconds": 58.988}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_028412", "completed": 90, "total": 152, "elapsed_seconds": 68.402}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_018550", "completed": 91, "total": 152, "elapsed_seconds": 69.908}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_017364", "completed": 92, "total": 152, "elapsed_seconds": 60.019}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_028981", "completed": 93, "total": 152, "elapsed_seconds": 74.67}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_009869", "completed": 94, "total": 152, "elapsed_seconds": 68.938}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_014556", "completed": 95, "total": 152, "elapsed_seconds": 60.23}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_024608", "completed": 96, "total": 152, "elapsed_seconds": 60.08}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_012687", "completed": 97, "total": 152, "elapsed_seconds": 68.631}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_031119", "completed": 98, "total": 152, "elapsed_seconds": 77.137}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_026149", "completed": 99, "total": 152, "elapsed_seconds": 70.442}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_009627", "completed": 100, "total": 152, "elapsed_seconds": 78.924}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_014546", "completed": 101, "total": 152, "elapsed_seconds": 60.78}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_015253", "completed": 102, "total": 152, "elapsed_seconds": 61.041}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_013583", "completed": 103, "total": 152, "elapsed_seconds": 71.156}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_024377", "completed": 104, "total": 152, "elapsed_seconds": 84.357}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_009771", "completed": 105, "total": 152, "elapsed_seconds": 59.367}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_028555", "completed": 106, "total": 152, "elapsed_seconds": 61.128}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_020410", "completed": 107, "total": 152, "elapsed_seconds": 75.661}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_029847", "completed": 108, "total": 152, "elapsed_seconds": 76.66}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_013922", "completed": 109, "total": 152, "elapsed_seconds": 61.292}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_011338", "completed": 110, "total": 152, "elapsed_seconds": 78.652}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_023643", "completed": 111, "total": 152, "elapsed_seconds": 69.904}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_008904", "completed": 112, "total": 152, "elapsed_seconds": 61.201}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_010016", "completed": 113, "total": 152, "elapsed_seconds": 53.699}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_008974", "completed": 114, "total": 152, "elapsed_seconds": 46.089}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_011175", "completed": 115, "total": 152, "elapsed_seconds": 61.332}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_021649", "completed": 116, "total": 152, "elapsed_seconds": 62.169}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_027704", "completed": 117, "total": 152, "elapsed_seconds": 52.074}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_025538", "completed": 118, "total": 152, "elapsed_seconds": 60.801}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_017498", "completed": 119, "total": 152, "elapsed_seconds": 79.682}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_010809", "completed": 120, "total": 152, "elapsed_seconds": 46.297}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_007382", "completed": 121, "total": 152, "elapsed_seconds": 62.146}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_026832", "completed": 122, "total": 152, "elapsed_seconds": 62.792}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_001437", "completed": 123, "total": 152, "elapsed_seconds": 61.621}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_000808", "completed": 124, "total": 152, "elapsed_seconds": 53.239}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_011937", "completed": 125, "total": 152, "elapsed_seconds": 60.899}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_014590", "completed": 126, "total": 152, "elapsed_seconds": 59.258}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_030493", "completed": 127, "total": 152, "elapsed_seconds": 61.16}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_004415", "completed": 128, "total": 152, "elapsed_seconds": 71.677}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_013681", "completed": 129, "total": 152, "elapsed_seconds": 62.32}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_019255", "completed": 130, "total": 152, "elapsed_seconds": 62.349}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_007506", "completed": 131, "total": 152, "elapsed_seconds": 80.763}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_017786", "completed": 132, "total": 152, "elapsed_seconds": 80.335}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_023774", "completed": 133, "total": 152, "elapsed_seconds": 73.338}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_030667", "completed": 134, "total": 152, "elapsed_seconds": 61.437}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_009440", "completed": 135, "total": 152, "elapsed_seconds": 72.214}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_026158", "completed": 136, "total": 152, "elapsed_seconds": 67.094}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_025134", "completed": 137, "total": 152, "elapsed_seconds": 66.418}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_016595", "completed": 138, "total": 152, "elapsed_seconds": 77.182}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_017566", "completed": 139, "total": 152, "elapsed_seconds": 84.049}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_013516", "completed": 140, "total": 152, "elapsed_seconds": 66.636}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_022781", "completed": 141, "total": 152, "elapsed_seconds": 66.192}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_011414", "completed": 142, "total": 152, "elapsed_seconds": 88.037}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_010214", "completed": 143, "total": 152, "elapsed_seconds": 67.137}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_012468", "completed": 144, "total": 152, "elapsed_seconds": 85.147}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_020411", "completed": 145, "total": 152, "elapsed_seconds": 67.613}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_020737", "completed": 146, "total": 152, "elapsed_seconds": 49.63}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_016056", "completed": 147, "total": 152, "elapsed_seconds": 66.002}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_004764", "completed": 148, "total": 152, "elapsed_seconds": 65.506}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_007797", "completed": 149, "total": 152, "elapsed_seconds": 85.512}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_002377", "completed": 150, "total": 152, "elapsed_seconds": 66.234}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_012603", "completed": 151, "total": 152, "elapsed_seconds": 67.312}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_024480", "completed": 152, "total": 152, "elapsed_seconds": 65.608}
+predictions=152
+new_predictions=78
+skipped_existing=74
+prediction_output=outputs/predictions/phase08_loss_ablation_train_decode_dev_two_candidate/dpo_v2_baseline/m3v2_dpo/train_decode_dev.jsonl
+ground_truth_output=outputs/eval_sets/phase08_loss_ablation_train_decode_dev_two_candidate/dpo_v2_baseline/train_decode_dev.jsonl

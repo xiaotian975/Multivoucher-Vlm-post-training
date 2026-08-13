@@ -1,0 +1,3 @@
+failed_at=2026-08-13T13:30:11+08:00
+exit_code=1
+resume_log=outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3/resume_curtail_decode_20260813_090155.nohup.log

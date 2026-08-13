@@ -1,0 +1,303 @@
+{
+  "run_id": "20260812_5gpu_ablation_r3",
+  "archive_type": "two_candidate_train_decode_dev",
+  "variants": [
+    "dpo_v2_baseline",
+    "auxdpo_v2_strong"
+  ],
+  "sample500_run": false,
+  "copied_sources": [
+    {
+      "source": "outputs/eval_reports/phase08_dpo_v2_baseline_ablation/dpo_v2_reward_audit.json",
+      "path": "training/dpo_v2_baseline/dpo_v2_reward_audit.json"
+    },
+    {
+      "source": "outputs/eval_reports/phase08_loss_ablation_train_decode_dev_two_candidate/dpo_v2_baseline/m3v2_dpo_train_decode_dev_errors.jsonl",
+      "path": "train_decode_dev/dpo_v2_baseline/m3v2_dpo_train_decode_dev_errors.jsonl"
+    },
+    {
+      "source": "outputs/eval_reports/phase08_loss_ablation_train_decode_dev_two_candidate/dpo_v2_baseline/m3v2_dpo_train_decode_dev_metrics.json",
+      "path": "train_decode_dev/dpo_v2_baseline/m3v2_dpo_train_decode_dev_metrics.json"
+    },
+    {
+      "source": "outputs/eval_reports/phase08_loss_ablation_train_decode_dev_two_candidate/dpo_v2_baseline/metrics_summary.csv",
+      "path": "train_decode_dev/dpo_v2_baseline/metrics_summary.csv"
+    },
+    {
+      "source": "outputs/predictions/phase08_loss_ablation_train_decode_dev_two_candidate/dpo_v2_baseline/m3v2_dpo/train_decode_dev.jsonl",
+      "path": "predictions/dpo_v2_baseline/train_decode_dev.jsonl"
+    },
+    {
+      "source": "outputs/eval_sets/phase08_loss_ablation_train_decode_dev_two_candidate/dpo_v2_baseline/train_decode_dev.jsonl",
+      "path": "ground_truth/dpo_v2_baseline/train_decode_dev.jsonl"
+    },
+    {
+      "source": "outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3/curtail_after_auxstrong/logs/dpo_v2_baseline_decode_dev.log",
+      "path": "logs/dpo_v2_baseline_decode_dev.log"
+    },
+    {
+      "source": "outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3/curtail_after_auxstrong/logs/dpo_v2_baseline_decode_dev.log.before_resume_20260813_090155",
+      "path": "logs/dpo_v2_baseline_decode_dev.log.before_resume_20260813_090155"
+    },
+    {
+      "source": "outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3/curtail_after_auxstrong/logs/dpo_v2_baseline_evaluate.log",
+      "path": "logs/dpo_v2_baseline_evaluate.log"
+    },
+    {
+      "source": "outputs/eval_reports/phase08_dpo_v2_auxstrong/dpo_v2_reward_audit.json",
+      "path": "training/auxdpo_v2_strong/dpo_v2_reward_audit.json"
+    },
+    {
+      "source": "outputs/eval_reports/phase08_loss_ablation_train_decode_dev_two_candidate/auxdpo_v2_strong/m3v2_dpo_train_decode_dev_errors.jsonl",
+      "path": "train_decode_dev/auxdpo_v2_strong/m3v2_dpo_train_decode_dev_errors.jsonl"
+    },
+    {
+      "source": "outputs/eval_reports/phase08_loss_ablation_train_decode_dev_two_candidate/auxdpo_v2_strong/m3v2_dpo_train_decode_dev_metrics.json",
+      "path": "train_decode_dev/auxdpo_v2_strong/m3v2_dpo_train_decode_dev_metrics.json"
+    },
+    {
+      "source": "outputs/eval_reports/phase08_loss_ablation_train_decode_dev_two_candidate/auxdpo_v2_strong/metrics_summary.csv",
+      "path": "train_decode_dev/auxdpo_v2_strong/metrics_summary.csv"
+    },
+    {
+      "source": "outputs/predictions/phase08_loss_ablation_train_decode_dev_two_candidate/auxdpo_v2_strong/m3v2_dpo/train_decode_dev.jsonl",
+      "path": "predictions/auxdpo_v2_strong/train_decode_dev.jsonl"
+    },
+    {
+      "source": "outputs/eval_sets/phase08_loss_ablation_train_decode_dev_two_candidate/auxdpo_v2_strong/train_decode_dev.jsonl",
+      "path": "ground_truth/auxdpo_v2_strong/train_decode_dev.jsonl"
+    },
+    {
+      "source": "outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3/curtail_after_auxstrong/logs/auxdpo_v2_strong_decode_dev.log",
+      "path": "logs/auxdpo_v2_strong_decode_dev.log"
+    },
+    {
+      "source": "outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3/curtail_after_auxstrong/logs/auxdpo_v2_strong_evaluate.log",
+      "path": "logs/auxdpo_v2_strong_evaluate.log"
+    },
+    {
+      "source": "data/mv_audit/dpo_v2/pair_report.json",
+      "path": "training/pair_report.json"
+    },
+    {
+      "source": "outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3/curtail_after_auxstrong.nohup.log",
+      "path": "logs/curtail_after_auxstrong.nohup.log"
+    },
+    {
+      "source": "outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3/main.log",
+      "path": "logs/main.log"
+    },
+    {
+      "source": "outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3/resume_curtail_decode_20260813_090155.nohup.log",
+      "path": "logs/resume_curtail_decode_20260813_090155.nohup.log"
+    },
+    {
+      "source": "outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3/server_auto_shutdown_after_archive.log",
+      "path": "logs/server_auto_shutdown_after_archive.log"
+    },
+    {
+      "source": "outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3/server_auto_shutdown_after_archive_20260813_090155.log",
+      "path": "logs/server_auto_shutdown_after_archive_20260813_090155.log"
+    },
+    {
+      "source": "outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3/server_auto_shutdown_after_archive_active.log",
+      "path": "logs/server_auto_shutdown_after_archive_active.log"
+    },
+    {
+      "source": "outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3/train_fallback.log",
+      "path": "logs/train_fallback.log"
+    },
+    {
+      "source": "outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3/resume_curtail_decode_20260813_090155.nohup.log",
+      "path": "logs/resume_curtail_decode_20260813_090155.nohup.log"
+    },
+    {
+      "source": "outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3/server_auto_shutdown_after_archive.log",
+      "path": "logs/server_auto_shutdown_after_archive.log"
+    },
+    {
+      "source": "outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3/server_auto_shutdown_after_archive_20260813_090155.log",
+      "path": "logs/server_auto_shutdown_after_archive_20260813_090155.log"
+    },
+    {
+      "source": "outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3/server_auto_shutdown_after_archive_20260813_090155.sh",
+      "path": "logs/server_auto_shutdown_after_archive_20260813_090155.sh"
+    },
+    {
+      "source": "outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3/server_auto_shutdown_after_archive_active.log",
+      "path": "logs/server_auto_shutdown_after_archive_active.log"
+    },
+    {
+      "source": "outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3/FAILED",
+      "path": "logs/FAILED.original"
+    }
+  ],
+  "files": [
+    {
+      "path": "README_APPEND.md",
+      "bytes": 1090,
+      "sha256": "a40efc9d41585203737466d72b86369140d0375857e7101b1b9bf7040f7c223c"
+    },
+    {
+      "path": "figures/train_decode_core_metrics.png",
+      "bytes": 44958,
+      "sha256": "76a705b55ba6613d855b5cc9de6e7c7e224fcf5218a6cf1f85dce8702b857846"
+    },
+    {
+      "path": "figures/train_decode_error_cases.png",
+      "bytes": 30956,
+      "sha256": "6905545dd0f42396319e2d444cd42f4e9d85400d3f5c331084a84b24baf5aafd"
+    },
+    {
+      "path": "figures/train_decode_validity_metrics.png",
+      "bytes": 38402,
+      "sha256": "b2419f54ac4827ad82ad5e09efef0cabac45d069a46608dc522a224639e0b4b6"
+    },
+    {
+      "path": "ground_truth/auxdpo_v2_strong/train_decode_dev.jsonl",
+      "bytes": 681100,
+      "sha256": "972cc63af1dee0fd770dae4bbcfb9a670f7edc493e20587d35494dbc60820acd"
+    },
+    {
+      "path": "ground_truth/dpo_v2_baseline/train_decode_dev.jsonl",
+      "bytes": 681100,
+      "sha256": "972cc63af1dee0fd770dae4bbcfb9a670f7edc493e20587d35494dbc60820acd"
+    },
+    {
+      "path": "logs/FAILED.original",
+      "bytes": 170,
+      "sha256": "1d623d96cf00601c3864f59e6d5aa7ecaeb392e806f45bcb1b913960aeadc577"
+    },
+    {
+      "path": "logs/auxdpo_v2_strong_decode_dev.log",
+      "bytes": 27356,
+      "sha256": "fa3163d392c7319942664ebdc1b9bf51d3662f3730699ca4c9684814d36bc6e5"
+    },
+    {
+      "path": "logs/auxdpo_v2_strong_evaluate.log",
+      "bytes": 764,
+      "sha256": "9f28b4cd8048430e5a33c4ab2a899e6547840bc4db7387033541edcfdfbfe2d0"
+    },
+    {
+      "path": "logs/curtail_after_auxstrong.nohup.log",
+      "bytes": 374,
+      "sha256": "bc37f43ec595854d0187145c2f79c3f5e964ed21dedaae89e7d614a9392ff48d"
+    },
+    {
+      "path": "logs/dpo_v2_baseline_decode_dev.log",
+      "bytes": 14568,
+      "sha256": "b32edcd095fc172ea8395b13af70b56e97928d788259c0557e6f8795a4c76e18"
+    },
+    {
+      "path": "logs/dpo_v2_baseline_decode_dev.log.before_resume_20260813_090155",
+      "bytes": 13483,
+      "sha256": "5f79aeba9d87b38d1af3b9b2559c586560a01753857cc5508697bd022e03765f"
+    },
+    {
+      "path": "logs/dpo_v2_baseline_evaluate.log",
+      "bytes": 763,
+      "sha256": "971bfa1666ce34f8d8de0826a267275e1101b143c7bf607c441f1ff411f36948"
+    },
+    {
+      "path": "logs/main.log",
+      "bytes": 6011,
+      "sha256": "e235643c1dd25069cf7886a5ba3cea935318be6ded0eb83cea3a336cc682e9ba"
+    },
+    {
+      "path": "logs/resume_curtail_decode_20260813_090155.nohup.log",
+      "bytes": 679,
+      "sha256": "603806dfe56f48f1cda5ddad8d64322951ac5a48c08b465433508769c84a8bbd"
+    },
+    {
+      "path": "logs/server_auto_shutdown_after_archive.log",
+      "bytes": 87,
+      "sha256": "f79d8b952e7668a68884de0b0fcf41cf1fd133034fb6c0a29cff540ed4232458"
+    },
+    {
+      "path": "logs/server_auto_shutdown_after_archive_20260813_090155.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/server_auto_shutdown_after_archive_20260813_090155.sh",
+      "bytes": 1022,
+      "sha256": "5616bdf03678e15b8c7ab67655a7c191f64bd29d901e0233354beca3b8ef5b69"
+    },
+    {
+      "path": "logs/server_auto_shutdown_after_archive_active.log",
+      "bytes": 309,
+      "sha256": "f2ea0a85900077b54c9ec1c91d811a6acf441d3928228144eafd9c5923c3c573"
+    },
+    {
+      "path": "logs/train_fallback.log",
+      "bytes": 255,
+      "sha256": "22d5e50b599bf0a2f9d4b77f99760ef571a5186183bcbf3f451d4491e144dfb3"
+    },
+    {
+      "path": "phase08_two_candidate_train_decode_dev_report.md",
+      "bytes": 1559,
+      "sha256": "5c6f84dc80fed48ef77eb63ba3ea4e3d9524ff4574bc0e39ae363a9f8112d240"
+    },
+    {
+      "path": "predictions/auxdpo_v2_strong/train_decode_dev.jsonl",
+      "bytes": 533451,
+      "sha256": "c49baca8aa809b9a25b01117a61a1a1fb7a2ce3c3ab6bfd39d11e5ca919f8b2f"
+    },
+    {
+      "path": "predictions/dpo_v2_baseline/train_decode_dev.jsonl",
+      "bytes": 533461,
+      "sha256": "6a68dfaa4683e273173edb8cca9a65770b84471702e9c3211bf56de065104042"
+    },
+    {
+      "path": "train_decode_dev/auxdpo_v2_strong/m3v2_dpo_train_decode_dev_errors.jsonl",
+      "bytes": 18226,
+      "sha256": "13f1c39ee43ddffc0cd67d7286360a7a1626c2e460186d97c3254b42aeb4bc8a"
+    },
+    {
+      "path": "train_decode_dev/auxdpo_v2_strong/m3v2_dpo_train_decode_dev_metrics.json",
+      "bytes": 637,
+      "sha256": "f99ab10e40fc2f2335ef4078a7f7a11bd2fd4113781197da72d68ea94bf61ff7"
+    },
+    {
+      "path": "train_decode_dev/auxdpo_v2_strong/metrics_summary.csv",
+      "bytes": 410,
+      "sha256": "927072927e12c40696ae3481b487d549eed7a95855929a867f1e4066b5cbc4d4"
+    },
+    {
+      "path": "train_decode_dev/dpo_v2_baseline/m3v2_dpo_train_decode_dev_errors.jsonl",
+      "bytes": 18698,
+      "sha256": "9cf6b50e894730c5d31235568d12f86ded0f8285308c959ec0a363b2eaf0ba04"
+    },
+    {
+      "path": "train_decode_dev/dpo_v2_baseline/m3v2_dpo_train_decode_dev_metrics.json",
+      "bytes": 637,
+      "sha256": "84002e286b1e9ac7846858b8347d9b3473b8795d15122314cdf84f7279152845"
+    },
+    {
+      "path": "train_decode_dev/dpo_v2_baseline/metrics_summary.csv",
+      "bytes": 410,
+      "sha256": "871ec8e49d910ad6b898614eb7bdbabeaa8782b0b9b85e1ba7f54c071e988fe1"
+    },
+    {
+      "path": "training/auxdpo_v2_strong/dpo_v2_reward_audit.json",
+      "bytes": 22413,
+      "sha256": "19499bac7e33fb2227708ef6720348a28daf578953c9f06aa7e4ce21129aa773"
+    },
+    {
+      "path": "training/dpo_v2_baseline/dpo_v2_reward_audit.json",
+      "bytes": 22441,
+      "sha256": "c889ab0c180769d26b0459f07fe081c7c34d7c3a66329321fa00b72163df1783"
+    },
+    {
+      "path": "training/pair_report.json",
+      "bytes": 1976,
+      "sha256": "ab77a91bf3128b523f88a2e9191f0731495a033b9676ec5589702fd64e146ac6"
+    },
+    {
+      "path": "two_candidate_train_decode_dev_summary.csv",
+      "bytes": 564,
+      "sha256": "cf213ae5167a05066b4b4b534607b91795109a65a2758aace8ca1545b8310e7c"
+    }
+  ],
+  "leakage_note": "Train decode dev only. This archive does not contain sample500 conclusions or adapter weights."
+}

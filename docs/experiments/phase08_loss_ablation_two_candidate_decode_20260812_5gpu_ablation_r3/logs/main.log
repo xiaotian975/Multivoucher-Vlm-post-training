@@ -1,0 +1,81 @@
+﻿[2026-08-12T14:43:18+08:00] run_id=20260812_5gpu_ablation_r3
+[2026-08-12T14:43:18+08:00] project_root=/root/autodl-tmp/VLM-Post-Training
+Wed Aug 12 14:43:18 2026
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 550.120                Driver Version: 550.120        CUDA Version: 12.4     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA vGPU-32GB               On  |   00000000:66:00.0 Off |                  N/A |
+| 30%   37C    P8             11W /  320W |       1MiB /  32760MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   1  NVIDIA vGPU-32GB               On  |   00000000:98:00.0 Off |                  N/A |
+| 30%   37C    P8             11W /  320W |       1MiB /  32760MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   2  NVIDIA vGPU-32GB               On  |   00000000:99:00.0 Off |                  N/A |
+| 30%   30C    P8              7W /  320W |       1MiB /  32760MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   3  NVIDIA vGPU-32GB               On  |   00000000:B1:00.0 Off |                  N/A |
+| 30%   31C    P8              9W /  320W |       1MiB /  32760MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   4  NVIDIA vGPU-32GB               On  |   00000000:B2:00.0 Off |                  N/A |
+| 30%   33C    P8              6W /  320W |       1MiB /  32760MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI        PID   Type   Process name                              GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+Listing 'src/mv_audit'...
+Listing 'src/mv_audit/analysis'...
+Listing 'src/mv_audit/converters'...
+Listing 'src/mv_audit/data_gen'...
+Listing 'src/mv_audit/evaluation'...
+Listing 'src/mv_audit/inference'...
+Listing 'src/mv_audit/perturbation'...
+Listing 'src/mv_audit/rendering'...
+Listing 'src/mv_audit/training'...
+Listing 'src/mv_audit/utils'...
+Listing 'tests'...
+[2026-08-12T14:43:18+08:00] pytest not found; skipping unit test
+[2026-08-12T14:43:18+08:00] dry_run variant=dpo_v2_baseline gpu=0
+[2026-08-12T14:43:19+08:00] dry_run variant=auxdpo_v2_strong gpu=1
+[2026-08-12T14:43:19+08:00] dry_run variant=auxdpo_v2_stronger gpu=2
+[2026-08-12T14:43:20+08:00] dry_run variant=ipo_v1 gpu=3
+[2026-08-12T14:43:21+08:00] dry_run variant=ipo_aux_v1 gpu=4
+[2026-08-12T14:43:21+08:00] train_start variant=dpo_v2_baseline gpu=0
+[2026-08-12T14:43:21+08:00] train_start variant=auxdpo_v2_strong gpu=1
+[2026-08-12T14:43:21+08:00] train_start variant=auxdpo_v2_stronger gpu=2
+[2026-08-12T14:43:21+08:00] train_start variant=ipo_v1 gpu=3
+[2026-08-12T14:43:21+08:00] train_start variant=ipo_aux_v1 gpu=4
+[2026-08-12T14:45:05+08:00] train_failed variant=dpo_v2_baseline gpu=0
+[FAILED] exit_code=1 run_root=outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3
+parallel_train_failed variant=dpo_v2_baseline code=1
+[2026-08-12T14:45:05+08:00] train_failed variant=ipo_aux_v1 gpu=4
+[2026-08-12T14:45:13+08:00] train_failed variant=ipo_v1 gpu=3
+[2026-08-12T14:45:14+08:00] train_failed variant=auxdpo_v2_strong gpu=1
+[FAILED] exit_code=1 run_root=outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3
+parallel_train_failed variant=auxdpo_v2_strong code=1
+[2026-08-12T14:45:15+08:00] train_failed variant=auxdpo_v2_stronger gpu=2
+[FAILED] exit_code=1 run_root=outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3
+parallel_train_failed variant=auxdpo_v2_stronger code=1
+[FAILED] exit_code=1 run_root=outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3
+parallel_train_failed variant=ipo_v1 code=1
+[FAILED] exit_code=1 run_root=outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3
+parallel_train_failed variant=ipo_aux_v1 code=1
+[2026-08-12T14:45:15+08:00] parallel training had failures; retrying incomplete variants sequentially with all GPUs
+[2026-08-12T14:45:15+08:00] train_start variant=dpo_v2_baseline gpu=all
+[2026-08-12T18:08:36+08:00] train_done variant=dpo_v2_baseline gpu=all
+[2026-08-12T18:08:36+08:00] train_start variant=auxdpo_v2_strong gpu=all
+[2026-08-12T21:32:35+08:00] train_done variant=auxdpo_v2_strong gpu=all
+[2026-08-12T21:32:35+08:00] train_start variant=auxdpo_v2_stronger gpu=all

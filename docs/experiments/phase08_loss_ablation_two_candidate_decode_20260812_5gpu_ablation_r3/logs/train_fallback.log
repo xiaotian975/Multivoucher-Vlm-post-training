@@ -1,0 +1,5 @@
+parallel_train_failed variant=dpo_v2_baseline code=1
+parallel_train_failed variant=auxdpo_v2_strong code=1
+parallel_train_failed variant=auxdpo_v2_stronger code=1
+parallel_train_failed variant=ipo_v1 code=1
+parallel_train_failed variant=ipo_aux_v1 code=1

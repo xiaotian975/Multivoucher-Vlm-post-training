@@ -1,0 +1,4 @@
+outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3/curtail_after_auxstrong.sh: line 1: ﻿#!/usr/bin/env: No such file or directory
+[2026-08-12T20:54:02+08:00] curtail watcher started
+[2026-08-12T21:32:43+08:00] auxstrong adapter detected; stopping original orchestrator before remaining variants
+[2026-08-12T21:32:48+08:00] decode_start variant=dpo_v2_baseline

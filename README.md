@@ -1,4 +1,4 @@
-# MultiVoucher-Audit
+﻿# MultiVoucher-Audit
 
 更新时间：2026-08-12
 本文是一份完整的工程项目报告，集中说明 MultiVoucher-Audit 的背景、任务定义、数据集、方法路线、创新点、Phase 00 到 Phase 08 的工程状态、训练状态、验证状态、测试状态、超参数、实验结果和失败原因。
@@ -1096,3 +1096,14 @@ Phase 08 M3v2：
 | dpo_v2_baseline | training_done_eval_not_run | dpo | 0.1000 | 40.0000 | 0.0121 | 0.0121 | 0.0000 | 44.0543 | 1.0000 | 25.7227 |
 
 说明：该候选目前只完成 DPO 训练，尚未运行 Train decode dev/sample500 推理评测，因此暂无 error cases、sample500 metrics 和错误迁移分析。服务器上的后续候选训练仍在继续。
+
+## Phase08 Two-candidate Train Decode Dev 对比（20260812_5gpu_ablation_r3）
+
+为降低服务器成本，本轮在 `dpo_v2_baseline` 与 `auxdpo_v2_strong` 两个候选完成训练后截停后续 3 个候选，只做 Train-only decode dev 对比。完整归档见 `docs/experiments/phase08_loss_ablation_two_candidate_decode_20260812_5gpu_ablation_r3/phase08_two_candidate_train_decode_dev_report.md`。
+
+| variant | total_cases | json_validity | schema_compliance | field_em | risk_type_macro_f1 | audit_accuracy | high_risk_miss_rate | false_manual_review_rate | evidence_support_rate | hallucination_rate | evidence_bbox_accuracy_relaxed | error_cases |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| dpo_v2_baseline | 152.0 | 1.0000 | 0.8684 | 0.8678 | 0.9012 | 0.8355 | 0.2299 | 0.0000 | 0.8098 | 0.0000 | 0.7983 | 44.0 |
+| auxdpo_v2_strong | 152.0 | 1.0000 | 0.8684 | 0.8678 | 0.9012 | 0.8355 | 0.2299 | 0.0000 | 0.8098 | 0.0000 | 0.7983 | 42.0 |
+
+该结果不是 sample500 测试结论，只用于决定是否值得继续扩大到 sample500。

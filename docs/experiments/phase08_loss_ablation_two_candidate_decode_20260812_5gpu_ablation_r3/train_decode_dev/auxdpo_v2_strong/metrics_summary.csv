@@ -1,0 +1,2 @@
+model_id,split,total_cases,json_validity,schema_compliance,field_em,risk_type_macro_f1,audit_accuracy,high_risk_miss_rate,false_manual_review_rate,evidence_support_rate,hallucination_rate,evidence_bbox_accuracy_relaxed,error_cases
+m3v2_dpo,train_decode_dev,152,1.0,0.868421052631579,0.8677631578947368,0.9011686425170148,0.8355263157894737,0.22988505747126436,0.0,0.8097514340344169,0.0,0.7982791586998088,42

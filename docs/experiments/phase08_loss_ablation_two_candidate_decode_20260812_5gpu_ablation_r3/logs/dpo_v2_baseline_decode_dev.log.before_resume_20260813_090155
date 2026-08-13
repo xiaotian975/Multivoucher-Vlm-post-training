@@ -1,0 +1,77 @@
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:01<00:04,  1.37s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:02<00:02,  1.38s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:04<00:01,  1.42s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:05<00:00,  1.26s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:05<00:00,  1.31s/it]
+The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_028895", "completed": 1, "total": 152, "elapsed_seconds": 81.521}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_028096", "completed": 2, "total": 152, "elapsed_seconds": 59.899}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_024378", "completed": 3, "total": 152, "elapsed_seconds": 77.41}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_016469", "completed": 4, "total": 152, "elapsed_seconds": 79.697}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_010784", "completed": 5, "total": 152, "elapsed_seconds": 61.191}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_004088", "completed": 6, "total": 152, "elapsed_seconds": 45.528}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_019775", "completed": 7, "total": 152, "elapsed_seconds": 61.53}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_025441", "completed": 8, "total": 152, "elapsed_seconds": 60.27}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_023344", "completed": 9, "total": 152, "elapsed_seconds": 63.081}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_030642", "completed": 10, "total": 152, "elapsed_seconds": 77.804}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_024556", "completed": 11, "total": 152, "elapsed_seconds": 53.282}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_013758", "completed": 12, "total": 152, "elapsed_seconds": 45.479}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_013570", "completed": 13, "total": 152, "elapsed_seconds": 59.813}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_024720", "completed": 14, "total": 152, "elapsed_seconds": 60.396}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_013227", "completed": 15, "total": 152, "elapsed_seconds": 46.474}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_009020", "completed": 16, "total": 152, "elapsed_seconds": 78.044}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_011401", "completed": 17, "total": 152, "elapsed_seconds": 62.083}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_004627", "completed": 18, "total": 152, "elapsed_seconds": 76.255}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_014575", "completed": 19, "total": 152, "elapsed_seconds": 45.579}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_016069", "completed": 20, "total": 152, "elapsed_seconds": 75.972}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_023746", "completed": 21, "total": 152, "elapsed_seconds": 60.329}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_012376", "completed": 22, "total": 152, "elapsed_seconds": 59.275}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_025856", "completed": 23, "total": 152, "elapsed_seconds": 61.997}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_014529", "completed": 24, "total": 152, "elapsed_seconds": 59.557}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_005085", "completed": 25, "total": 152, "elapsed_seconds": 60.808}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_022467", "completed": 26, "total": 152, "elapsed_seconds": 79.888}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_009648", "completed": 27, "total": 152, "elapsed_seconds": 75.818}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_007444", "completed": 28, "total": 152, "elapsed_seconds": 63.285}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_003881", "completed": 29, "total": 152, "elapsed_seconds": 71.749}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_023069", "completed": 30, "total": 152, "elapsed_seconds": 62.629}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_019413", "completed": 31, "total": 152, "elapsed_seconds": 71.615}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_020814", "completed": 32, "total": 152, "elapsed_seconds": 61.034}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_027074", "completed": 33, "total": 152, "elapsed_seconds": 79.191}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_012883", "completed": 34, "total": 152, "elapsed_seconds": 81.369}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_023717", "completed": 35, "total": 152, "elapsed_seconds": 63.256}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_009551", "completed": 36, "total": 152, "elapsed_seconds": 70.057}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_023807", "completed": 37, "total": 152, "elapsed_seconds": 60.435}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_029536", "completed": 38, "total": 152, "elapsed_seconds": 82.225}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_028830", "completed": 39, "total": 152, "elapsed_seconds": 62.37}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_003978", "completed": 40, "total": 152, "elapsed_seconds": 60.119}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_006763", "completed": 41, "total": 152, "elapsed_seconds": 60.613}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_006243", "completed": 42, "total": 152, "elapsed_seconds": 79.563}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_020984", "completed": 43, "total": 152, "elapsed_seconds": 47.971}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_005477", "completed": 44, "total": 152, "elapsed_seconds": 61.5}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_027278", "completed": 45, "total": 152, "elapsed_seconds": 61.61}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_027642", "completed": 46, "total": 152, "elapsed_seconds": 62.96}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_000332", "completed": 47, "total": 152, "elapsed_seconds": 70.482}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_020703", "completed": 48, "total": 152, "elapsed_seconds": 63.105}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_015818", "completed": 49, "total": 152, "elapsed_seconds": 60.946}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_010523", "completed": 50, "total": 152, "elapsed_seconds": 59.767}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_002580", "completed": 51, "total": 152, "elapsed_seconds": 61.098}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_005847", "completed": 52, "total": 152, "elapsed_seconds": 60.279}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_009815", "completed": 53, "total": 152, "elapsed_seconds": 76.42}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_011017", "completed": 54, "total": 152, "elapsed_seconds": 61.35}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_024735", "completed": 55, "total": 152, "elapsed_seconds": 48.176}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_011907", "completed": 56, "total": 152, "elapsed_seconds": 77.835}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_029923", "completed": 57, "total": 152, "elapsed_seconds": 51.586}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_030116", "completed": 58, "total": 152, "elapsed_seconds": 59.889}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_005860", "completed": 59, "total": 152, "elapsed_seconds": 56.455}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_016346", "completed": 60, "total": 152, "elapsed_seconds": 76.61}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_011236", "completed": 61, "total": 152, "elapsed_seconds": 61.536}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_008537", "completed": 62, "total": 152, "elapsed_seconds": 66.15}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_022564", "completed": 63, "total": 152, "elapsed_seconds": 85.556}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_030956", "completed": 64, "total": 152, "elapsed_seconds": 52.756}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_006896", "completed": 65, "total": 152, "elapsed_seconds": 78.686}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_000484", "completed": 66, "total": 152, "elapsed_seconds": 61.618}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_009078", "completed": 67, "total": 152, "elapsed_seconds": 60.672}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_019701", "completed": 68, "total": 152, "elapsed_seconds": 54.724}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_020744", "completed": 69, "total": 152, "elapsed_seconds": 61.355}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_027020", "completed": 70, "total": 152, "elapsed_seconds": 60.1}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_003389", "completed": 71, "total": 152, "elapsed_seconds": 75.62}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_002840", "completed": 72, "total": 152, "elapsed_seconds": 77.152}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_003269", "completed": 73, "total": 152, "elapsed_seconds": 60.862}
+{"event": "prediction_complete", "model_id": "m3v2_dpo", "split": "train_decode_dev", "case_id": "MV_MAIN_019752", "completed": 74, "total": 152, "elapsed_seconds": 61.435}

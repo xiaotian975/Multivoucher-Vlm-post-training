@@ -1,0 +1,19 @@
+{
+  "total_cases": 152,
+  "json_validity": 1.0,
+  "schema_compliance": 0.868421052631579,
+  "field_em": 0.8677631578947368,
+  "consistency_em": 0.8643092105263158,
+  "risk_type_macro_f1": 0.9011686425170148,
+  "audit_accuracy": 0.8355263157894737,
+  "high_risk_miss_rate": 0.22988505747126436,
+  "false_manual_review_rate": 0.0,
+  "evidence_support_rate": 0.8097514340344169,
+  "evidence_value_accuracy": 0.8097514340344169,
+  "evidence_source_accuracy": 0.8097514340344169,
+  "evidence_bbox_accuracy_strict": 0.7896749521988528,
+  "evidence_bbox_accuracy_relaxed": 0.7982791586998088,
+  "hallucination_rate": 0.0,
+  "error_cases": 42
+}
+metrics_summary=outputs/eval_reports/phase08_loss_ablation_train_decode_dev_two_candidate/auxdpo_v2_strong/metrics_summary.csv

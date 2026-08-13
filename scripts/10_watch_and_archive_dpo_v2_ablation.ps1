@@ -16,6 +16,9 @@ function Invoke-Remote {
     param([string]$Command)
     $target = $User + "@" + $HostName
     $output = ssh -p $Port $target "cd '$RemoteProject' && $Command"
+    if ($LASTEXITCODE -ne 0) {
+        throw "ssh_failed exit_code=$LASTEXITCODE command=$Command"
+    }
     if ($null -eq $output) {
         return ""
     }
@@ -26,6 +29,9 @@ function Copy-RemoteFile {
     param([string]$RemotePath, [string]$LocalPath)
     $targetPath = $User + "@" + $HostName + ":" + $RemoteProject + "/" + $RemotePath
     scp -P $Port $targetPath $LocalPath
+    if ($LASTEXITCODE -ne 0) {
+        throw "scp_failed exit_code=$LASTEXITCODE remote_path=$RemotePath"
+    }
 }
 
 Set-Location $LocalRepo
@@ -59,16 +65,22 @@ while ($true) {
 
         "ready run_id=$runId" | Tee-Object -FilePath $watchLog -Append | Out-Null
         $archiveRel = (Invoke-Remote "cat '$runRoot/archive_tar_path'").Trim()
-        $tmpArchive = Join-Path $env:TEMP ("phase08_loss_ablation_{0}.tar.gz" -f $runId)
+        $archiveFile = Split-Path -Leaf $archiveRel
+        if (-not $archiveFile.EndsWith(".tar.gz")) {
+            throw "Unsupported archive filename: $archiveRel"
+        }
+        $archiveName = $archiveFile.Substring(0, $archiveFile.Length - ".tar.gz".Length)
+        $archiveRelDir = Join-Path "docs\experiments" $archiveName
+        $tmpArchive = Join-Path $env:TEMP $archiveFile
         Copy-RemoteFile $archiveRel $tmpArchive
         tar -xzf $tmpArchive -C $LocalRepo
 
-        $archiveDir = Join-Path $LocalRepo ("docs\experiments\phase08_loss_ablation_{0}" -f $runId)
+        $archiveDir = Join-Path $LocalRepo $archiveRelDir
         $appendPath = Join-Path $archiveDir "README_APPEND.md"
         if (-not (Test-Path $appendPath)) {
             throw "README append file missing: $appendPath"
         }
-        $marker = "phase08_loss_ablation_$runId"
+        $marker = $archiveName
         $readme = Join-Path $LocalRepo "README.md"
         $readmeText = Get-Content -Encoding UTF8 $readme -Raw
         if ($readmeText -notmatch [regex]::Escape($marker)) {
@@ -96,7 +108,7 @@ print(f"manifest_ok files={len(manifest['files'])}")
         python -c $manifestCheck $archiveDir
 
         rg -n "phase08_loss_ablation_|High-risk Miss Rate|Audit Accuracy|AuxDPO|IPO" README.md $archiveDir | Out-Null
-        git diff --check -- README.md "docs/experiments/phase08_loss_ablation_$runId"
+        git diff --check -- README.md $archiveRelDir
 
         "archive_ok run_id=$runId time=$(Get-Date -Format o)" | Tee-Object -FilePath $watchLog -Append | Out-Null
 
