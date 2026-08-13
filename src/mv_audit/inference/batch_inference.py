@@ -20,7 +20,7 @@ from mv_audit.inference.qwen3vl_common import (
 from mv_audit.utils import ensure_dir, iter_jsonl, load_config, read_jsonl, write_jsonl
 
 
-MODEL_IDS = {"m0_zero_shot", "m1_few_shot", "m2_sft", "m3_dpo", "m3v2_dpo"}
+MODEL_IDS = {"m0_zero_shot", "m1_few_shot", "m2_sft", "m3_dpo", "m3v2_dpo", "repair_sft_r1"}
 TEST_SPLITS = {"test_clean", "test_robust", "test_unseen_template", "test_hard_negative", "train_decode_dev"}
 DEFAULT_CONFIG = "configs/train/sft_lora_qwen3vl_8b.yaml"
 
@@ -248,6 +248,7 @@ def _load_model_for_inference(config: dict[str, Any], *, model_id: str):
     model, processor, model_path = load_qwen3vl_model_and_processor(model_config)
     adapter_key_by_model = {
         "m2_sft": "sft_adapter_dir",
+        "repair_sft_r1": "sft_adapter_dir",
         "m3_dpo": "dpo_adapter_dir",
         "m3v2_dpo": "dpo_adapter_dir",
     }

@@ -1,0 +1,30 @@
+{
+  "name": "phase08_high_risk_repair_sft_r1_mix",
+  "seed": 42,
+  "repair_rows": 120,
+  "calibration_rows": 120,
+  "total_rows": 240,
+  "inspected_sft_rows": 28500,
+  "calibration_bucket_counts": {
+    "low_pass": 80,
+    "medium_or_manual_review": 40
+  },
+  "excluded_case_counts": {
+    "repair_pack": 120,
+    "dpo_v2_holdout": 2,
+    "train_decode_dev": 160,
+    "sample500": 8000
+  },
+  "overlap_counts": {
+    "dpo_v2_holdout": 0,
+    "train_decode_dev": 0,
+    "sample500": 0
+  },
+  "overlaps": {
+    "dpo_v2_holdout": [],
+    "train_decode_dev": [],
+    "sample500": []
+  },
+  "source_policy": "MV-Train only; repair pack plus low/pass and medium/manual-review calibration; no holdout/decode/sample500 overlap.",
+  "output_train": "D:\\Reserach\\Projects\\VLM post-training\\docs\\experiments\\phase08_high_risk_repair_pack_20260813\\repair_sft_train_mix.jsonl"
+}
