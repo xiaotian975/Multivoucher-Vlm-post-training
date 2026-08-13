@@ -1,0 +1,25 @@
+{
+  "name": "phase08_high_risk_repair_pack_20260813",
+  "inputs": {
+    "two_candidate_archive": "docs/experiments/phase08_loss_ablation_two_candidate_decode_20260812_5gpu_ablation_r3",
+    "sample500_metrics": "docs/experiments/phase08_m3v2_sample500/m2_m3_m3v2_split_metrics.csv",
+    "sft_train": "data/mv_audit/sft_main/train.jsonl",
+    "raw_cases_main": "data/mv_audit/raw_cases/main"
+  },
+  "outputs": [
+    "high_risk_miss_diagnosis_report.md",
+    "metric_snapshot.csv",
+    "error_source_summary.csv",
+    "representative_high_risk_cases.jsonl",
+    "candidate_cases.jsonl",
+    "repair_pack_sft.jsonl",
+    "leakage_check.json"
+  ],
+  "selected_candidates": 120,
+  "selected_overlap_counts": {
+    "dpo_v2_holdout": 0,
+    "train_decode_dev": 0,
+    "sample500": 0
+  },
+  "policy": "Train-only high-risk non-pass repair candidates; no sample500/test/holdout/decode overlap."
+}

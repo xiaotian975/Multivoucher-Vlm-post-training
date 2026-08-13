@@ -1,0 +1,43 @@
+{
+  "inspected_sft_rows": 28500,
+  "candidate_pool_size": 14315,
+  "selected_candidates": 120,
+  "train_only_rejected": 0,
+  "excluded_case_counts": {
+    "dpo_v2_holdout": 2,
+    "train_decode_dev": 160,
+    "sample500": 8000
+  },
+  "excluded_hits_while_mining": {
+    "train_decode_dev": 153,
+    "dpo_v2_holdout": 2
+  },
+  "selected_overlap_counts": {
+    "dpo_v2_holdout": 0,
+    "train_decode_dev": 0,
+    "sample500": 0
+  },
+  "selected_overlaps": {
+    "dpo_v2_holdout": [],
+    "train_decode_dev": [],
+    "sample500": []
+  },
+  "selected_family_counts": {
+    "amount_abnormal": 18,
+    "order_id_inconsistent": 17,
+    "evidence_or_document_insufficient": 17,
+    "date_mismatch": 17,
+    "person_mismatch": 17,
+    "merchant_mismatch": 17,
+    "duplicate_in_batch": 17
+  },
+  "candidate_pool_family_counts": {
+    "amount_abnormal": 3206,
+    "evidence_or_document_insufficient": 2919,
+    "order_id_inconsistent": 2028,
+    "merchant_mismatch": 1996,
+    "person_mismatch": 1934,
+    "duplicate_in_batch": 1499,
+    "date_mismatch": 733
+  }
+}
