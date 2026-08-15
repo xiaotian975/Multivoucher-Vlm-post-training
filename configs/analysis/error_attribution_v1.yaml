@@ -1,0 +1,3 @@
+field_score_min: 0.95
+anomaly_score_min: 0.90
+evidence_support_min: 1.0

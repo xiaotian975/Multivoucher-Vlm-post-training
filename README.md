@@ -1006,7 +1006,9 @@ Repair Pack 约束：
 | 通用评测 | `scripts/08_evaluate.sh` |
 | DPO 错误迁移 | `scripts/09_analyze_dpo_error_migration.sh` |
 | DPO v2 ablation | `scripts/10_run_dpo_v2_ablation_5gpu_server.sh` |
+| DPO v2 本地归档 watcher | `scripts/10_watch_and_archive_dpo_v2_ablation.ps1` |
 | repair_sft_r1 小闭环 | `scripts/11_run_high_risk_repair_sft_r1_server.sh` |
+| 服务器只读状态检查 | `outputs/runtime/*/LATEST_RUN_ID`、`FAILED`、`READY_TO_ARCHIVE`、日志目录 |
 
 ### 13.3 关键归档路径
 
@@ -1050,3 +1052,372 @@ Git 中不保留：
 - 大规模渲染图片。
 
 当前 README 只报告已验证结果；未完成的 `repair_sft_r1` 不被写成已完成。
+
+## 14. 服务器工程实现实录
+
+本章回答一个很具体的问题：连接上 Linux 服务器后，这个项目到底是怎么跑起来的？
+
+结论先说清楚：不是点击“运行”按钮，也不是在网页控制台里手动点某个训练入口。本项目的服务器实验主要通过 SSH 登录 Linux，进入远端仓库目录，显式配置 Python/Conda 路径，然后用 `bash` 脚本、`nohup` 后台任务、日志轮询、`pgrep`、`nvidia-smi` 和归档 watcher 完成训练、推理、评测和关机保护。
+
+本章事实分两类：
+
+- 仓库归档日志可验证：当前本地仓库里已有 `docs/experiments/.../logs/`、manifest、metrics、README_APPEND 等文件，可直接复查。
+- 历史执行摘要可追溯：部分早期环境修复、数据软链接和依赖处理来自会话执行摘要；这些内容在本地归档中没有完整原始 shell transcript，因此在文中标为“历史执行摘要记录显示”。
+
+### 14.1 初始只读检查：先判断本地有没有结果
+
+在真正判断“服务器训练怎么样”之前，先做本地只读检查。原因是本地仓库和服务器不是实时同步的：本地没有 checkpoint、predictions 或 metrics，不等于服务器没有在跑；同样，本地有旧归档，也不等于服务器当前还在线。
+
+本地通常先看这些位置：
+
+```powershell
+git status --short --branch
+rg --files outputs/checkpoints outputs/predictions outputs/eval_reports docs/experiments
+rg -n "metrics_summary|High-risk Miss|Audit Accuracy|READY_TO_ARCHIVE|FAILED" docs/experiments outputs
+```
+
+这些检查解决的是“本地已经保存了什么”。它不能替代服务器状态检查，因为服务器上的长任务、GPU 利用率、`nohup` 日志和 `READY_TO_ARCHIVE` 标记都在远端 `/root/autodl-tmp/VLM-Post-Training` 下。
+
+### 14.2 SSH 连接与服务器目录
+
+历史执行摘要记录显示，服务器项目目录和数据目录为：
+
+| 项目 | 路径 |
+| --- | --- |
+| SSH 用户和主机 | `root@connect.westc.seetacloud.com` |
+| 端口 | 随当次服务器实例变化，历史实例使用过 `51327` |
+| 远端代码仓库 | `/root/autodl-tmp/VLM-Post-Training` |
+| 远端上传数据 | `/root/autodl-tmp/data` |
+| 可用 Python | `/root/miniconda3/bin/python` |
+
+代表性连接方式：
+
+```bash
+ssh -p <PORT> root@connect.westc.seetacloud.com
+cd /root/autodl-tmp/VLM-Post-Training
+export PATH="/root/miniconda3/bin:/root/anaconda3/bin:$PATH"
+```
+
+这里的 `<PORT>` 不是永久固定配置，而是云服务器实例当次分配的 SSH 端口。README 不建议把历史端口当作永远可用的连接方式。
+
+### 14.3 环境配置：用 shell 脚本，不用 GUI
+
+服务器环境不是通过图形界面配置的。核心入口是：
+
+| 目标 | 文件 |
+| --- | --- |
+| 安装 Python 依赖 | `scripts/00_prepare_env.sh` |
+| 下载或定位基座模型 | `scripts/00_download_qwen3vl.sh` |
+| SFT 训练入口 | `scripts/04_train_sft.sh` |
+| DPO v2 训练入口 | `scripts/05_train_dpo_v2.sh` |
+| Phase08 DPO v2 服务器编排 | `scripts/10_run_dpo_v2_ablation_5gpu_server.sh` |
+
+`scripts/00_prepare_env.sh` 安装的是项目运行依赖，例如 `transformers`、`qwen-vl-utils`、`accelerate`、`peft`、`trl`、`pillow`、`opencv-python`、`jsonschema`、`pyyaml`、`huggingface_hub`、`modelscope`。脚本明确不默认安装 `flash-attn`，因为它对 CUDA、torch 和编译环境要求更高，容易把一次可控实验变成环境编译排错。
+
+历史执行摘要记录显示，服务器环境实际遇到过这些兼容问题：
+
+| 问题 | 表现 | 处理 |
+| --- | --- | --- |
+| 默认 shell 找不到可用 `python/conda` | 直接执行 `python` 或 `conda` 不可靠 | 显式使用 `/root/miniconda3/bin/python`，并把 `/root/miniconda3/bin` 加到 `PATH` |
+| NumPy `2.2.6` ABI 不兼容 | torch/matplotlib 相关导入异常 | 降到 `numpy==1.26.4` |
+| torch `2.1.2` 与新 transformers/Qwen3-VL 不兼容 | 缺少 `register_pytree_node` 相关能力 | 升级到 torch `2.4.1` 方向 |
+| 长 SSH 命令容易断 | 安装或训练中途连接抖动 | 长任务改为 `nohup` 后台运行，短命令轮询日志 |
+
+环境配置的关键点是“脚本化和可追踪”：依赖安装、模型下载、训练启动都留在 shell 脚本或日志里，而不是依赖人工点按钮。
+
+### 14.4 烟熏测试：证明能跑，不等于证明有效
+
+服务器正式训练前，会先做 smoke/dry-run。典型检查包括：
+
+```bash
+nvidia-smi
+python -m compileall src/mv_audit tests
+DRY_RUN=1 MAX_SAMPLES=8 CONFIG=configs/train/dpo_v2_baseline_ablation_qwen3vl_8b.yaml bash scripts/05_train_dpo_v2.sh
+pgrep -af train_dpo
+pgrep -af batch_inference
+tail -f outputs/runtime/dpo_v2_ablation_5gpu/<RUN_ID>/main.log
+```
+
+`docs/experiments/phase08_loss_ablation_two_candidate_decode_20260812_5gpu_ablation_r3/logs/main.log` 中可验证：
+
+- 服务器启动时有 5 张 `NVIDIA vGPU-32GB`，每张约 `32760 MiB`。
+- `python -m compileall src/mv_audit ... tests` 已运行。
+- 当时 `pytest` 不存在，因此日志写入 `pytest not found; skipping unit test`。
+- 五个 DPO v2 候选都先跑了 `dry_run`。
+
+smoke/dry-run 的含义非常有限：
+
+| 检查 | 能证明什么 | 不能证明什么 |
+| --- | --- | --- |
+| `compileall` | Python 文件语法能被编译 | 模型指标有效 |
+| DPO/SFT dry-run | 配置、数据读取、训练入口能走通少量样本 | 完整训练一定能结束 |
+| `nvidia-smi` | GPU 是否可见、显存和利用率大致状态 | 模型是否在有效学习 |
+| `pgrep` | 进程是否存在 | 评测结果是否变好 |
+| `tail` 日志 | 当前脚本执行到了哪一步 | 业务指标是否达标 |
+
+所以 README 中所有“dry-run 通过”都只表示工程入口可用，不等于实验结论。
+
+### 14.5 SFT 服务器流程：先修数据可用性，再训练
+
+历史执行摘要记录显示，SFT 阶段没有直接重渲染全量图片，而是先处理“服务器上哪些图片真的存在”的问题。
+
+服务器上曾有这样的数据现实：
+
+- 代码仓库内的 `data/` 体积较小。
+- 上传的大数据在 `/root/autodl-tmp/data`。
+- SFT 所需图片并非每一行都完整存在。
+- 测试四个 split 的图片和 annotations 较完整。
+
+因此采用的流程是：
+
+```bash
+cd /root/autodl-tmp/VLM-Post-Training
+export PATH="/root/miniconda3/bin:/root/anaconda3/bin:$PATH"
+
+# 逻辑动作：把仓库期望的数据入口指向上传数据
+# images_main -> /root/autodl-tmp/data/...
+# annotations_main -> /root/autodl-tmp/data/...
+
+# 逻辑动作：先统计缺失图片，再构造只包含完整图片的训练子集
+# 输出 train_existing_images.jsonl / val_existing_images.jsonl
+
+DRY_RUN=1 MAX_SAMPLES=64 CONFIG=configs/train/sft_lora_qwen3vl_8b_server_debug.yaml bash scripts/04_train_sft.sh
+```
+
+为什么不直接运行全量重渲染？因为 `render_all.py --all_splits` 或 `scripts/02_render_main_images.sh` 会重写整批图片和 annotations。对于服务器已有大数据但存在少量缺图的情况，更稳妥的路线是先统计缺图，再过滤完整样本或只补缺失样本。历史执行摘要记录显示，最终生成了 `train_existing_images.jsonl`、`val_existing_images.jsonl` 和 64/16 debug 子集，并得到 `phase07_sft_dry_run=ok`。
+
+### 14.6 DPO v2 服务器流程：五候选尝试、OOM、fallback
+
+DPO v2 的服务器主控脚本是：
+
+```bash
+RUN_ID=20260812_5gpu_ablation_r3 nohup bash scripts/10_run_dpo_v2_ablation_5gpu_server.sh > outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3.nohup.log 2>&1 &
+```
+
+脚本内部做了几件事：
+
+- 写入 `outputs/runtime/dpo_v2_ablation_5gpu/LATEST_RUN_ID`。
+- 为 run 创建 `outputs/runtime/dpo_v2_ablation_5gpu/<RUN_ID>/`。
+- 设置 `READY_TO_ARCHIVE` 和 `FAILED` 两类终止标记。
+- 先对五个候选做 dry-run。
+- 尝试五个候选各占一张 GPU 并发训练。
+- 如果并发失败，则对未完成候选逐个使用 `CUDA_VISIBLE_DEVICES="0,1,2,3,4"` 顺序训练。
+
+当次五个候选为：
+
+| 候选 | 配置 |
+| --- | --- |
+| `dpo_v2_baseline` | `configs/train/dpo_v2_baseline_ablation_qwen3vl_8b.yaml` |
+| `auxdpo_v2_strong` | `configs/train/dpo_v2_auxstrong_qwen3vl_8b.yaml` |
+| `auxdpo_v2_stronger` | `configs/train/dpo_v2_auxstronger_qwen3vl_8b.yaml` |
+| `ipo_v1` | `configs/train/dpo_v2_ipo_qwen3vl_8b.yaml` |
+| `ipo_aux_v1` | `configs/train/dpo_v2_ipo_aux_qwen3vl_8b.yaml` |
+
+`main.log` 可验证，当次流程在 `2026-08-12T14:43:21+08:00` 启动五候选并发训练，但约两分钟后全部 `train_failed`，随后进入：
+
+```text
+parallel training had failures; retrying incomplete variants sequentially with all GPUs
+```
+
+历史执行摘要记录显示，失败原因是 32GB 单卡上同时放 DPO policy/reference 显存不足，典型错误为 `torch.OutOfMemoryError`，显存接近 31GB。fallback 不是 DDP，也不是 FSDP，而是单候选使用 5 张 GPU 的 `device_map=auto` 模型分片。因此它能降低单卡显存压力，但计算利用率不一定平均分布到 5 张卡。
+
+当次可验证的训练结果：
+
+| 时间 | 事件 |
+| --- | --- |
+| `2026-08-12T14:45:15+08:00` | 开始 `dpo_v2_baseline` 五卡顺序训练 |
+| `2026-08-12T18:08:36+08:00` | `dpo_v2_baseline` 训练完成 |
+| `2026-08-12T18:08:36+08:00` | 开始 `auxdpo_v2_strong` 五卡顺序训练 |
+| `2026-08-12T21:32:35+08:00` | `auxdpo_v2_strong` 训练完成 |
+
+随后用户要求“第二个候选完成后就停，不继续跑剩下 3 个候选”，因此没有继续完整运行 `auxdpo_v2_stronger`、`ipo_v1`、`ipo_aux_v1`。
+
+### 14.7 Decode 恢复流程：从 baseline 74/152 接着跑
+
+截停脚本相关文件在远端 runroot 下：
+
+```bash
+bash outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3/curtail_after_auxstrong.sh
+```
+
+这里有一个 Linux 脚本细节：`curtail_after_auxstrong.sh` 出现过带 BOM 的 shebang 问题，归档日志中能看到：
+
+```text
+curtail_after_auxstrong.sh: line 1: ﻿#!/usr/bin/env: No such file or directory
+```
+
+解决方式是显式用 `bash` 调脚本，而不是依赖第一行 shebang 自动解释。
+
+后续 resume 日志位于：
+
+```text
+docs/experiments/phase08_loss_ablation_two_candidate_decode_20260812_5gpu_ablation_r3/logs/resume_curtail_decode_20260813_090155.nohup.log
+```
+
+该日志可验证：
+
+| 时间 | 事件 |
+| --- | --- |
+| `2026-08-13T09:01:55+08:00` | `curtail watcher started` |
+| `2026-08-13T09:01:55+08:00` | 检测到 auxstrong adapter，停止原主控后续候选 |
+| `2026-08-13T09:02:01+08:00` | 开始 `dpo_v2_baseline` decode |
+| `2026-08-13T10:29:13+08:00` | baseline decode 完成 |
+| `2026-08-13T10:29:13+08:00` | 开始 `auxdpo_v2_strong` decode |
+| `2026-08-13T13:30:11+08:00` | auxstrong decode 完成 |
+
+推理使用 `--resume` 语义，保留已写出的预测，不删除、不重跑 baseline 前 74 条。最终业务产物显示：
+
+- `dpo_v2_baseline`：`152/152`，其中 resume 新增 `78` 条，跳过已有 `74` 条。
+- `auxdpo_v2_strong`：`152/152`，新增 `152` 条。
+
+这就是第 10.5 节 two-candidate Train decode dev 对比表的来源。
+
+### 14.8 自动归档与关机：本地 watcher 和服务器 watcher 的区别
+
+本项目尝试过两种 watcher。
+
+第一种是本地 PowerShell watcher：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/10_watch_and_archive_dpo_v2_ablation.ps1 `
+  -HostName connect.westc.seetacloud.com `
+  -Port <PORT> `
+  -User root `
+  -RemoteProject /root/autodl-tmp/VLM-Post-Training `
+  -LocalRepo "D:\Reserach\Projects\VLM post-training" `
+  -PollSeconds 120 `
+  -ShutdownOnSuccess
+```
+
+它的策略是：
+
+1. SSH 轮询远端 `LATEST_RUN_ID`。
+2. 如果远端出现 `FAILED`，本地记录失败并退出，不关机。
+3. 如果远端出现 `READY_TO_ARCHIVE`，读取 `archive_tar_path`。
+4. 用 `scp` 拉取 tar。
+5. 解压到本地真实归档目录。
+6. 校验 `artifact_manifest.json` 的 SHA256。
+7. 检查 README append 和 `git diff --check`。
+8. 只有本地拉取和校验成功，才发 `shutdown -h now`。
+
+后来因为用户准备关闭本地电脑，策略改成服务器端 watcher：不再依赖本地持续在线，而是在服务器上等 tar 归档成功后自行关机。归档中的脚本为：
+
+```text
+docs/experiments/phase08_loss_ablation_two_candidate_decode_20260812_5gpu_ablation_r3/logs/server_auto_shutdown_after_archive_20260813_090155.sh
+```
+
+核心逻辑是：
+
+```bash
+if test -f "$runroot/FAILED"; then
+  echo "remote_failed_no_shutdown=$(date -Is)" >> "$log"
+  cat "$runroot/FAILED" >> "$log"
+  exit 2
+fi
+
+if test -f "$runroot/READY_TO_ARCHIVE" && test -s "$runroot/archive_tar_path"; then
+  archive=$(cat "$runroot/archive_tar_path")
+  if test -s "$archive" && tar -tzf "$archive" >/dev/null 2>&1; then
+    sync
+    sleep 10
+    shutdown -h now
+  fi
+fi
+```
+
+这里最重要的安全边界是：只要出现 `FAILED`，watcher 就不关机。当前归档中的 `server_auto_shutdown_after_archive_active.log` 可验证，当次 watcher 记录了：
+
+```text
+auto_shutdown_watcher_start=2026-08-13T09:01:55+08:00 run_id=20260812_5gpu_ablation_r3
+remote_failed_no_shutdown=2026-08-13T13:31:55+08:00
+```
+
+原因是 resume 脚本末尾出现 `NameError: name 'sys' is not defined`，写入了 `FAILED`。虽然 baseline 和 auxstrong decode 已实际完成，并且后续本地归档中已有 two-candidate metrics，但服务器端 watcher 按安全策略选择“不关机”。这是一种保守保护：宁可人工确认，也不在异常标记存在时自动关机。
+
+### 14.9 服务器执行中出现的问题与解决
+
+| 问题 | 发生位置 | 影响 | 解决或当前策略 |
+| --- | --- | --- | --- |
+| 32GB 单卡 DPO OOM | 五候选单卡并发训练 | 五个候选并发均失败 | 改为单候选 5 卡 `device_map=auto` 顺序训练 |
+| `device_map=auto` 被误解为 5 卡并行 | 状态汇报和资源判断 | 容易高估 5 卡计算利用率 | README 明确它是模型分片，不是 DDP/FSDP |
+| BOM shebang | `curtail_after_auxstrong.sh` | 直接执行脚本时报 `#!/usr/bin/env` 不存在 | 显式 `bash outputs/runtime/.../curtail_after_auxstrong.sh` |
+| `ERR` trap 误写 `FAILED` | DPO 主控脚本 fallback 阶段 | 预期 OOM fallback 被记录成终态失败 | fallback 阶段需要抑制 terminal `FAILED`，并传播真实子进程退出码 |
+| resume 末尾 `NameError: sys` | `resume_curtail_decode_20260813_090155.nohup.log` | decode 完成后仍写入 `FAILED`，服务器 watcher 不关机 | 保留安全策略，先人工核对 metrics 和归档 |
+| PowerShell 带空格路径 | 本地 watcher 启动 | `D:\Reserach\Projects\VLM post-training` 易被拆参数 | PowerShell 参数统一加引号，必要时前台验证日志 |
+| SCP 多文件中断 | 服务器到本地拉取 | 可能部分文件缺失但误以为完成 | 单文件重拉，检查文件大小、manifest、SHA256 |
+| 中文 UTF-8 乱码 | PowerShell 生成 README/报告 | 中文可能显示为问号或乱码 | `Get-Content -Encoding UTF8` 抽查，并用关键词搜索 |
+| 显存占用不等于计算利用率 | `nvidia-smi` 状态判断 | 看到显存占用但 GPU-Util 低 | 同时看 `pgrep`、日志、checkpoint、READY/FAILED |
+
+### 14.10 代表性命令清单
+
+下面命令是工程记录格式，展示服务器上如何执行和检查。昂贵训练命令不要在没有重新确认的情况下直接重跑。
+
+```bash
+# 连接服务器
+ssh -p <PORT> root@connect.westc.seetacloud.com
+
+# 进入项目并固定 Python/Conda 路径
+cd /root/autodl-tmp/VLM-Post-Training
+export PATH="/root/miniconda3/bin:/root/anaconda3/bin:$PATH"
+
+# 查看 GPU
+nvidia-smi
+
+# 本地语法级 smoke
+python -m compileall src/mv_audit tests
+
+# DPO v2 少样本 dry-run
+DRY_RUN=1 MAX_SAMPLES=8 CONFIG=configs/train/dpo_v2_baseline_ablation_qwen3vl_8b.yaml bash scripts/05_train_dpo_v2.sh
+
+# 启动服务器端 DPO v2 ablation 主流程
+RUN_ID=20260812_5gpu_ablation_r3 nohup bash scripts/10_run_dpo_v2_ablation_5gpu_server.sh > outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3.nohup.log 2>&1 &
+
+# 只读查看进程和日志
+pgrep -af train_dpo
+pgrep -af batch_inference
+tail -f outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3/main.log
+
+# 手动恢复 two-candidate decode
+bash outputs/runtime/dpo_v2_ablation_5gpu/20260812_5gpu_ablation_r3/curtail_after_auxstrong.sh
+
+# 归档可读性检查
+tar -tzf docs/experiments/phase08_loss_ablation_two_candidate_decode_20260812_5gpu_ablation_r3.tar.gz
+
+# 只有 watcher 判断归档完整且无 FAILED 时，才允许关机
+shutdown -h now
+```
+
+Windows 本地拉取和校验时的代表性命令：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/10_watch_and_archive_dpo_v2_ablation.ps1 -ShutdownOnSuccess -PollSeconds 120
+git diff --check
+Get-Content -Encoding UTF8 README.md -TotalCount 60
+```
+
+### 14.11 本次服务器相关代码和脚本补充
+
+| 文件 | 类型 | 作用 | 当前状态 |
+| --- | --- | --- | --- |
+| `scripts/10_run_dpo_v2_ablation_5gpu_server.sh` | 服务器编排脚本 | 组织 Phase08 DPO v2 五候选 dry-run、训练、decode、评测和归档；维护 `LATEST_RUN_ID`、`FAILED`、`READY_TO_ARCHIVE` | 已用于 `20260812_5gpu_ablation_r3` |
+| `scripts/10_watch_and_archive_dpo_v2_ablation.ps1` | 本地 watcher | 从远端读取真实 tar 路径，拉取归档，校验 manifest，必要时 append README，校验通过后可发关机命令 | 已修正为按真实 tar 目录名解压 |
+| `outputs/runtime/.../curtail_after_auxstrong.sh` | 远端临时截停脚本 | 在第二个候选完成后停止剩余三候选，并恢复 baseline/auxstrong Train decode dev | 远端生成，归档日志记录了执行过程 |
+| `logs/server_auto_shutdown_after_archive_20260813_090155.sh` | 服务器端 watcher | 本地电脑关闭时，服务器自行等待归档 tar 可读后关机；若 `FAILED` 存在则不关机 | 当次因 `FAILED` 触发保护，未关机 |
+| `scripts/11_run_high_risk_repair_sft_r1_server.sh` | 未来 repair SFT 服务器入口 | 构造 repair mix，SFT dry-run，训练 repair_sft_r1，只跑 Train decode dev，归档结果 | 已准备，服务器正式训练未完成 |
+| `src/mv_audit/analysis/high_risk_repair_pack.py` | 分析脚本 | 诊断 high-risk miss，生成 120 条 Train-only repair cases | 已生成 repair pack |
+| `src/mv_audit/converters/build_high_risk_repair_sft_mix.py` | 数据构造脚本 | 将 120 条 repair cases 与 120 条 calibration 样本混合为 repair SFT 训练集 | 已 dry-run 验证 |
+| `src/mv_audit/analysis/archive_high_risk_repair_sft.py` | 归档脚本 | 归档 repair_sft_r1 的配置、日志、metrics、摘要和 manifest，不默认归档大 checkpoint | 已准备，等待正式 repair_sft_r1 跑完 |
+
+### 14.12 服务器复现入口和安全边界
+
+如果后续要复现服务器流程，推荐顺序是：
+
+1. 先读 `docs/code_inventory.md`，明确每个脚本和模块负责什么。
+2. 本地只读检查 `docs/experiments/`、`outputs/`、`git status`。
+3. SSH 到服务器后只读检查 `LATEST_RUN_ID`、`FAILED`、`READY_TO_ARCHIVE`、`pgrep`、`nvidia-smi`、最新日志。
+4. 只在用户明确确认后启动昂贵训练或推理。
+5. 长任务一律用 `nohup` 或等价后台方式，并写入 runroot 日志。
+6. 归档必须先生成 manifest，再校验 tar 可读性。
+7. 自动关机必须以“无 `FAILED` 且归档可读”为前提。
+
+本章列出的服务器命令是工程实现记录，不是无条件复跑说明。尤其是 DPO v2、repair_sft_r1、sample500/test 推理都属于昂贵或有数据边界要求的操作，不能在没有新确认的情况下直接执行。
