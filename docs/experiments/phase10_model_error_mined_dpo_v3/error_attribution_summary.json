@@ -1,0 +1,45 @@
+{
+  "baseline_high_risk_misses": [
+    "MV_MAIN_003978",
+    "MV_MAIN_016083",
+    "MV_MAIN_019752",
+    "MV_MAIN_025856",
+    "MV_MAIN_030493"
+  ],
+  "candidate_high_risk_misses": [
+    "MV_MAIN_003978",
+    "MV_MAIN_013516",
+    "MV_MAIN_016083",
+    "MV_MAIN_019752",
+    "MV_MAIN_020411",
+    "MV_MAIN_020984",
+    "MV_MAIN_024735",
+    "MV_MAIN_025856",
+    "MV_MAIN_027278",
+    "MV_MAIN_027704",
+    "MV_MAIN_030493",
+    "MV_MAIN_030956"
+  ],
+  "fixed_high_risk_misses": [],
+  "introduced_high_risk_misses": [
+    "MV_MAIN_013516",
+    "MV_MAIN_020411",
+    "MV_MAIN_020984",
+    "MV_MAIN_024735",
+    "MV_MAIN_027278",
+    "MV_MAIN_027704",
+    "MV_MAIN_030956"
+  ],
+  "candidate_issue_counts": {
+    "bbox_strict_error": 23,
+    "audit_mismatch": 20,
+    "high_risk_miss": 12,
+    "unsupported_evidence": 5,
+    "hallucination": 1
+  },
+  "audit_transition_counts": {
+    "reject_recommendation->pass": 5,
+    "reject_recommendation->manual_review": 14,
+    "pass->reject_recommendation": 1
+  }
+}

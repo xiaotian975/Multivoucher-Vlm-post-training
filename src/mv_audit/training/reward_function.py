@@ -23,8 +23,11 @@ DETAIL_KEYS = [
     "r_evidence",
     "r_json",
     "r_uncertainty",
+    "r_order_id_pair",
     "p_hallucination",
     "p_high_risk_miss",
+    "p_missing_order_id_pair",
+    "p_false_escalation",
 ]
 
 
@@ -84,6 +87,37 @@ def _high_risk_miss(truth: dict[str, Any], pred: dict[str, Any] | None) -> float
     return 0.0
 
 
+def _order_id_values(output: dict[str, Any]) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for item in output.get("evidence") or []:
+        if not isinstance(item, dict) or item.get("field") != "order_id":
+            continue
+        doc_type = str(item.get("source_doc_type") or "")
+        value = str(item.get("value") or "")
+        if doc_type in {"order", "reimbursement_form"} and value:
+            values.setdefault(doc_type, value)
+    return values
+
+
+def _order_id_pair_score(truth: dict[str, Any], pred: dict[str, Any]) -> float:
+    if "order_id_mismatch" not in set(truth.get("anomaly_types") or []):
+        return 0.0
+    truth_values = _order_id_values(truth)
+    pred_values = _order_id_values(pred)
+    if set(truth_values) != {"order", "reimbursement_form"}:
+        return 0.0
+    if truth_values["order"] == truth_values["reimbursement_form"]:
+        return 0.0
+    return 1.0 if pred_values == truth_values else 0.0
+
+
+def _false_escalation(truth: dict[str, Any], pred: dict[str, Any]) -> float:
+    if truth.get("risk_level") != "low" or truth.get("audit_result") != "pass":
+        return 0.0
+    escalated = pred.get("risk_level") == "high" or pred.get("audit_result") == "reject_recommendation"
+    return 1.0 if escalated else 0.0
+
+
 def _weighted_reward(details: dict[str, float]) -> float:
     raw = (
         0.15 * details["r_field"]
@@ -93,8 +127,11 @@ def _weighted_reward(details: dict[str, float]) -> float:
         + 0.15 * details["r_evidence"]
         + 0.10 * details["r_json"]
         + 0.10 * details["r_uncertainty"]
+        + 0.25 * details["r_order_id_pair"]
         - 0.20 * details["p_hallucination"]
         - 0.40 * details["p_high_risk_miss"]
+        - 0.50 * details["p_missing_order_id_pair"]
+        - 0.40 * details["p_false_escalation"]
     )
     return _clip(raw)
 
@@ -155,11 +192,18 @@ def score_output(
             else 0.0,
             "r_evidence": sum(evidence_subscores) / len(evidence_subscores),
             "r_uncertainty": _uncertainty_score(truth, pred),
+            "r_order_id_pair": _order_id_pair_score(truth, pred),
             "p_hallucination": _rate(hallucinated, hallucination_total),
             "p_high_risk_miss": _high_risk_miss(truth, pred),
+            "p_false_escalation": _false_escalation(truth, pred),
         }
     )
-    return {"reward": _weighted_reward(details), "details": details}
+    if "order_id_mismatch" in set(truth.get("anomaly_types") or []) and details["r_order_id_pair"] < 1.0:
+        details["p_missing_order_id_pair"] = 1.0
+    reward = _weighted_reward(details)
+    if details["p_missing_order_id_pair"] > 0:
+        reward = min(0.0, reward)
+    return {"reward": reward, "details": details}
 
 
 def reward_for_grpo(
@@ -200,6 +244,9 @@ def summarize_reward_outputs(scores: list[dict[str, Any]]) -> dict[str, float]:
             "json_valid_rate": 0.0,
             "high_risk_miss_rate": 0.0,
             "hallucination_penalty": 0.0,
+            "order_id_pair_rate": 0.0,
+            "missing_order_id_pair_rate": 0.0,
+            "false_escalation_rate": 0.0,
         }
 
     count = float(len(scores))
@@ -211,4 +258,7 @@ def summarize_reward_outputs(scores: list[dict[str, Any]]) -> dict[str, float]:
         "json_valid_rate": sum(float(item.get("r_json", 0.0)) for item in details) / count,
         "high_risk_miss_rate": sum(float(item.get("p_high_risk_miss", 0.0)) for item in details) / count,
         "hallucination_penalty": sum(float(item.get("p_hallucination", 0.0)) for item in details) / count,
+        "order_id_pair_rate": sum(float(item.get("r_order_id_pair", 0.0)) for item in details) / count,
+        "missing_order_id_pair_rate": sum(float(item.get("p_missing_order_id_pair", 0.0)) for item in details) / count,
+        "false_escalation_rate": sum(float(item.get("p_false_escalation", 0.0)) for item in details) / count,
     }

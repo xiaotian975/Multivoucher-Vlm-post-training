@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0",
+  "selection_date": "2026-08-20",
+  "selection_scope": "train_only_development_gate",
+  "final_holdout_completed": false,
+  "production_candidate": {
+    "model_id": "repair_sft_r3",
+    "role": "PRODUCTION_CANDIDATE",
+    "deployment_status": "NOT_DEPLOYED",
+    "adapter_remote_path": "outputs/checkpoints/sft/qwen3vl_8b_high_risk_repair_r3_order_id_structured_from_r2",
+    "adapter_local_archive": "outputs/model_candidates/repair_sft_r3/repair_sft_r3_production_candidate.tar",
+    "adapter_local_path": "outputs/model_candidates/repair_sft_r3/outputs/checkpoints/sft/qwen3vl_8b_high_risk_repair_r3_order_id_structured_from_r2",
+    "adapter_archive_status": "ARCHIVED_AND_VERIFIED",
+    "adapter_archive_sha256": "476757f15ca7797b09e4b08599e3115847be5d56bfec79f4a53387575dbf9ff6",
+    "adapter_config_sha256": "5684ade9bdcb091e46d5294896a96e3739382c3429d99d86e652365d8a039bb8",
+    "adapter_sha256": "2cf2bbdc7cc507eb4833332900ee516e2cc40792d17576714ef0a11591ac5fe2",
+    "evaluation": {
+      "benchmark": "train_decode_dev",
+      "cases": 152,
+      "audit_accuracy": 0.9671052631578947,
+      "high_risk_miss_rate": 0.05747126436781609,
+      "evidence_support_rate": 0.9875717017208413,
+      "json_validity": 1.0,
+      "schema_compliance": 1.0
+    },
+    "metrics_source": "outputs/remote_artifacts/model_mined_dpo_v3/20260816_173434/outputs/runtime/model_mined_dpo_v3/20260816_173434/eval/sft_v3/metrics.json"
+  },
+  "alignment_research_candidate": {
+    "model_id": "dpo_v3_model_mined_strong_checkpoint15",
+    "role": "ALIGNMENT_RESEARCH_CANDIDATE",
+    "full_gate_status": "ALIGNMENT_GATE_NOT_MET",
+    "deployment_eligible": false,
+    "adapter_local_path": "outputs/remote_artifacts/model_mined_dpo_v3/20260820_143221/outputs/checkpoints/dpo/qwen3vl_8b_dpo_v3_model_mined_strong_from_weak_step40/checkpoint-15",
+    "adapter_sha256": "e99b51bab0c2ad6ced8e7990fa46efad8b6403de9d7efc89d4f8879ae193f88a",
+    "alignment_probe": {
+      "cases": 24,
+      "reward_delta": 0.16666666666666669,
+      "order_id_pair_rate_delta": 0.1111111111111111,
+      "json_valid_rate": 1.0,
+      "false_escalation_rate": 0.0
+    },
+    "full_gate": {
+      "benchmark": "train_decode_dev",
+      "cases": 152,
+      "audit_accuracy": 0.868421052631579,
+      "high_risk_miss_rate": 0.13793103448275862,
+      "evidence_support_rate": 0.9904397705544933,
+      "json_validity": 1.0,
+      "schema_compliance": 1.0
+    },
+    "decision_source": "docs/experiments/phase10_model_error_mined_dpo_v3/final_alignment_decision.corrected.json"
+  },
+  "historical_baseline": {
+    "model_id": "m2_sft",
+    "role": "HISTORICAL_SAMPLE500_BASELINE",
+    "benchmark": "sample500_four_split_average"
+  },
+  "data_policy": {
+    "sample500_used_for_phase10_selection": false,
+    "test_used_for_phase10_selection": false,
+    "train_decode_dev_used_for_fast_gate": true
+  },
+  "archive_provenance": {
+    "weak_v3_log": {
+      "path": "outputs/model_candidates/repair_sft_r3/outputs/runtime/model_mined_dpo_v3/20260820_122300/logs/dpo_v3_train.log",
+      "sha256": "9ddc49a1e3c05ef9f1d8d550ff56e4ec8fab8120c0b1faf26333b70206a42f04"
+    },
+    "strong_v3_log": {
+      "path": "outputs/model_candidates/repair_sft_r3/outputs/runtime/model_mined_dpo_v3/20260820_133149/logs/dpo_v3_train.log",
+      "sha256": "4b475b03deccd0cd38ce5cd660227de76c08e1fffaad40bc84c94d1dc4245555"
+    },
+    "remote_and_local_hashes_match": true,
+    "adapter_weights_non_empty": true,
+    "adapter_config_readable": true,
+    "server_shutdown_status": "REQUESTED_AND_SSH_CLOSED"
+  }
+}

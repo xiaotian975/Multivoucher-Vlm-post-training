@@ -1,0 +1,18 @@
+repair_fast_gate:
+  json_validity_delta_min: -0.01
+  schema_compliance_delta_min: -0.03
+  audit_accuracy_delta_min: -0.03
+  high_risk_miss_delta_max: 0.03
+  evidence_support_delta_min: -0.03
+
+repair_main_gate:
+  json_validity_delta_min: -0.01
+  schema_compliance_delta_min: -0.02
+  audit_accuracy_delta_min: -0.01
+  high_risk_miss_improvement_min: 0.03
+  evidence_support_delta_min: -0.01
+
+rl_decision:
+  min_residual_error_cases: 5
+  min_decision_candidate_ratio: 0.60
+  min_decision_primary_ratio: 0.50

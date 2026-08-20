@@ -1,10 +1,473 @@
-# MultiVoucher-Audit
+# MultiVoucher-Audit：多凭证报销审计 VLM 后训练
 
-更新时间：2026-08-13
+更新时间：2026-08-20
 
-MultiVoucher-Audit 是一个面向企业费用报销一致性审计的 VLM 后训练项目。它用合成但可控的多凭证报销数据训练和评测 `Qwen3-VL-8B-Instruct`，要求模型同时读取发票、支付截图、报销申请单和订单截图，输出可程序评测的 Evidence-Grounded JSON。
+> 一个从数据合成、LoRA-SFT、结构化错误修复、Model-Mined DPO、业务评测到模型归档的完整 VLM 后训练项目。基座模型为 `Qwen3-VL-8B-Instruct`，输入发票、支付截图、报销申请单和订单截图，输出可校验、可定位、可追责的 Evidence-Grounded JSON。
 
-代码逐文件说明见 [docs/code_inventory.md](docs/code_inventory.md)。本文是论文式工程报告，重点说明任务、数据集、模型方法、损失函数、训练设置、benchmark、SFT/DPO 实验结果和失败原因。
+## 先看这里：项目结论
+
+### 招聘者一分钟摘要
+
+这个项目解决的不是单图 OCR，而是多张业务凭证之间的字段抽取、跨图一致性判断、风险分级和证据定位。项目从零构造了带字段、异常、风险、审核动作和 bbox 真值的合成数据，完成 `LoRA-SFT -> Repair SFT -> DPO` 的完整后训练链，并建立 JSON/schema、证据、风险漏检和错误迁移等分层门禁。
+
+| 项目成果 | 可审计结果 |
+| --- | --- |
+| 原生模型到可用结构化审计 | M0 zero-shot 的 Audit Accuracy 为 `0.0000`，M2 LoRA-SFT 在历史 sample500 上达到 `0.7735`，JSON Validity 为 `1.0000` |
+| 定位并修复高风险漏检 | Structured Repair SFT v3 在 152 条 Train-only `train_decode_dev` 上达到 Audit `96.71%`、HRM `5.75%`、Evidence Support `98.76%` |
+| 完成偏好对齐研究 | Model-Mined DPO v3 在独立 probe 上使 task reward 提升 `+0.167`、Order-ID Pair Rate 提升 `+11.1pp` |
+| 建立模型治理结论 | SFT v3 为 `PRODUCTION_CANDIDATE / NOT_DEPLOYED`；DPO checkpoint-15 为 `ALIGNMENT_RESEARCH_CANDIDATE`，因 full gate 未通过而不替代 SFT |
+| 完成可复现归档 | M2 -> R1 -> R2 -> R3 -> DPO weak-40 -> DPO strong-15 六级 adapter 全部在本地通过 SHA256、配置和 safetensors 头部校验 |
+
+“Production candidate”只表示通过 Train-only 开发门禁；项目没有运行 final holdout，也没有部署。历史 sample500 与当前 train_decode_dev 是两套不同 benchmark，本文始终分表报告。
+
+### 我在项目中负责什么
+
+- 将报销审核拆成多图字段抽取、跨图一致性、风险规则、审核动作、证据闭环和结构契约六类问题。
+- 设计合成数据生成、异常注入、case-level split、图片渲染和 bbox 真值链路。
+- 审计并迭代 LoRA-SFT、Repair SFT、DPO/IPO/GRPO 代码，设置 dry-run、reward smoke、fast gate 和停止条件。
+- 针对 DPO loss 与业务 KPI 背离，完成 easy-pair 饱和、sequence margin 虚高和决策边界漂移诊断。
+- 设计 model-error-mined hard pairs、assistant-token mean log-prob、alignment probe/full gate 两级选择。
+- 完成五卡 DDP、模型切分、case sharding、checkpoint probe 并行和远端归档自动化。
+- 使用 AI 辅助代码草拟、排错和文档整理；需求边界、代码审计、实验选择、指标核验和候选决策由人工控制，并由可复现产物验证。
+
+### 阅读路线
+
+| 读者 | 建议入口 |
+| --- | --- |
+| 招聘者/面试官 | 本节、[结果总表](#实验结果总表)、[创新点](#项目级创新点)、[工程复盘](#问题原因与解决方案) |
+| 初学者 | [完整训练谱系](#完整后训练谱系)、[多卡实现](#五卡训练模型并行与任务并行)、[指标说明](#指标来源公式与业务含义) |
+| 复现实验 | [服务器手册](#服务器训练推理评测与归档)、[代码地图](#代码结构与输入输出)、[Phase 10 报告](docs/experiments/phase10_model_error_mined_dpo_v3/README.md) |
+| 查模型 | [归档审计](docs/experiments/phase10_model_error_mined_dpo_v3/model_lineage_archive_audit.md)、[模型选择](docs/experiments/phase10_model_error_mined_dpo_v3/model_selection.json) |
+
+## 项目背景与任务定义
+
+企业费用审核需要同时核对发票、支付截图、报销申请单和订单截图。模型接收一个 case 下的 2 到 4 张图片，输出固定 schema JSON：
+
+```text
+images + case_id
+  -> field_extraction
+  -> consistency_check
+  -> anomaly_types
+  -> risk_level
+  -> audit_result
+  -> reason
+  -> evidence[{source_image_id, source_doc_type, field, value, bbox}]
+  -> uncertainty
+```
+
+任务难点有四层：视觉层要读出小字号订单号和金额；关系层要判断同一字段在不同凭证是否一致；决策层要把异常映射为风险和审核动作；接口层要保证 JSON/schema 始终可被程序消费。只优化某一层，常会出现“异常识别正确但审核放行”或“语义正确但 schema 非法”。
+
+## 技术栈与系统架构
+
+- 基座：`Qwen3-VL-8B-Instruct`
+- 参数高效训练：PEFT LoRA，target modules 为 `q/k/v/o/gate/up/down_proj`
+- 训练：PyTorch、Transformers、BF16、gradient checkpointing、DDP、`device_map=balanced`
+- 对齐：DPO、weighted preference pair、SFT auxiliary loss、mean-token log-prob
+- 数据与评测：JSONL、JSON Schema Draft 2020-12、case-level split、bbox/证据评分
+- 工程：Bash、PowerShell watcher、pytest、SHA256、draw.io、可恢复 shard merge
+
+![完整后训练架构](docs/experiments/phase10_model_error_mined_dpo_v3/figures/post_training_pipeline.png)
+
+可编辑源文件：[post_training_pipeline.drawio](docs/experiments/phase10_model_error_mined_dpo_v3/figures/post_training_pipeline.drawio)
+
+## 项目级创新点
+
+以下是项目级工程创新，不把通用 DPO、LoRA 或 Accuracy 包装为原创算法：
+
+1. **多凭证证据闭环**：审核结论必须回指图片、凭证类型、字段、值和 bbox。
+2. **结构化 Repair SFT**：把错误归因拆成 schema、证据、感知和决策，只对真实残留错误构造小规模 repair mix。
+3. **Order-ID 双侧证据约束**：订单号不一致时，target 和 verifier 同时要求两类凭证中的两个不同订单号。
+4. **Model-Error-Mined Hard Pairs**：从当前 SFT 模型真实生成错误中挖 rejected，避免规则篡改 easy rejected 过早饱和。
+5. **Mean-token DPO**：以 assistant token 平均 log-prob 计算偏好，降低长 JSON 累加 margin 失真。
+6. **Probe/full-gate 分层选择**：先检查目标偏好是否学到，再以 152 条 full gate 防止局部收益掩盖业务负迁移。
+7. **可审计候选治理**：adapter、配置、日志、predictions、metrics、errors 和 SHA256 构成完整谱系。
+
+## 完整后训练谱系
+
+### 总时间线
+
+```text
+业务 schema 与风险规则
+  -> 合成 case / 异常注入 / 图片与 bbox
+  -> M0 zero-shot / M1 few-shot
+  -> M2 LoRA-SFT
+  -> DPO v1 负迁移
+  -> DPO v2 保护性修正
+  -> Repair SFT R1 / R2
+  -> schema guard 与 order-id 错误归因
+  -> Structured Repair SFT R3
+  -> 240 x 4 model mining
+  -> 120 hard train pairs + 24 case-disjoint probe
+  -> DPO v3 weak-40 / strong checkpoint-15
+  -> probe gate / 152-case full gate
+  -> production 与 research 候选分流归档
+```
+
+每一步都遵循“先定位、再 dry-run、再训练、再 fast gate、最后决定是否继续”的顺序。sample500/Test 没有回流到 Phase 9/10 的训练、pair 挖掘或 reward 调参。
+
+### 各阶段的输入、输出和决策
+
+| 阶段 | 出发点与输入 | 训练/执行 | 主要输出 | 结果与决策 |
+| --- | --- | --- | --- | --- |
+| 数据生成 | 业务词典、case schema、异常规则 | 生成 case，case-level split，渲染图片与 bbox | raw cases、annotations、images、SFT/DPO/GRPO JSONL | 建立可控真值和隐私友好的训练底座 |
+| M0/M1 | 原始 Qwen3-VL；zero/few-shot prompt | 仅推理 | sample500 predictions/metrics | Audit `0.0000/0.0785`，prompt 不足以建立任务 |
+| M2 SFT | 21,682 train + 1,138 val | LoRA-SFT，1 epoch | `qwen3vl_8b_lora_existing_epoch1` | sample500 Audit `0.7735`，成为历史业务基线 |
+| DPO v1 | 1,000 条规则式 easy rejected | DPO | M3 adapter、history、sample500 | loss 很低且 margin 极高，Audit 降到 `0.6685`，判为业务负迁移 |
+| DPO v2 | 3,000 train + 300 holdout；hard/protective/calibration pairs | weighted DPO + SFT auxiliary | M3v2 与 ablation | Audit 恢复到 `0.7645`，HRM `0.2546`，仍不优于 M2 |
+| Repair R1/R2 | 120 high-risk repair + 120 calibration，后续强化 order-id | 从 M2/R1 继续 LoRA-SFT | R1、R2 adapter 与 152 条 gate | schema 修复后确认残留核心是 order-id 证据读取 |
+| Repair R3 | 480 条 Train-only structured mix | 从 R2 继续 1 epoch，五卡 DDP | R3 adapter、metrics/errors | Audit `0.9671`、HRM `0.0575`，选为开发候选 |
+| Model mining | 未进入 repair/dev/holdout/test 的 240 条 Train-only case | 每条采样 4 个，共 960 completions | 894 个 schema 合法输出、pair audit | 从真实模型错误构造困难偏好，不再依赖简单篡改 |
+| DPO v3 weak | 120 train pairs、24 probe，R3 policy/reference | 40 step，`beta=0.2`，mean-token | weak checkpoint-40、日志 | 获取可继续训练的弱对齐初始化 |
+| DPO v3 strong | weak-40 继续训练 | 最多 20 step，5 step 一存；选择 checkpoint-15 | strong cp15、probe/full metrics | probe 正向，但 full gate 业务退化，归档为 research candidate |
+
+### Structured Repair SFT v3
+
+R3 不再只在 prompt 中提醒订单号，而是把 target 改成显式结构：
+
+- `reason` 写明“订单截图订单号 A 与报销单订单号 B 不一致”。
+- `evidence` 前置两条 order-id 证据，并要求不同来源、不同值。
+- verifier 对 mismatch case 检查双侧证据，schema guard 只用于业务输出合法化。
+- repair mix 保留 low/pass calibration 和 R1/R2 carryover，避免全量升级为高风险。
+
+配置：[high_risk_repair_sft_v3_order_id_structured_from_r2_qwen3vl_8b_server.yaml](configs/train/high_risk_repair_sft_v3_order_id_structured_from_r2_qwen3vl_8b_server.yaml)
+
+```bash
+# dry-run 后，只有显式允许训练时启动
+ALLOW_TRAINING=1 bash scripts/12_run_order_id_repair_sft_v3_server.sh
+```
+
+输入是 480 条 Train-only mix；输出是 R3 adapter、152 条 predictions、metrics 和 errors。实际训练完成 96 step，运行约 498 秒。
+
+### Model-Mined DPO v3
+
+DPO v1/v2 的核心问题不是“训练没收敛”，而是 pair 太容易。chosen 多为 M2 已见过的标准答案，rejected 多为规则篡改；holdout preference accuracy 很早达到 1.0，模型只学会区分人工坏答案。
+
+DPO v3 改成：
+
+1. 用 R3 对 240 条隔离的 Train-only case 每条采样 4 次。
+2. 对原始输出做 JSON/schema、task reward、风险动作和 order-id evidence 审计。
+3. 优先保留模型真实生成的困难 rejected，控制 pair 难度与类别比例。
+4. 使用 assistant-token 平均 log-prob，避免长 JSON 仅因 token 多而产生巨大 margin。
+5. high-risk/order-id pair 提高权重，并加入 `lambda_sft` 约束语言建模漂移。
+6. checkpoint 先过 24 条 alignment probe，再对唯一候选运行 152 条 full gate。
+
+核心配置：
+
+| 阶段 | LR | beta | lambda_sft | grad accumulation | 上限 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| weak DPO | `1e-6` | `0.2` | `0.05` | 4 | 40 step |
+| strong continuation | `5e-6` | `1.0` | `0.2` | 4 | 20 step |
+
+入口：[scripts/13_run_model_mined_dpo_v3_server.sh](scripts/13_run_model_mined_dpo_v3_server.sh)、[scripts/16_run_model_error_mined_dpo_v3_strong_server.sh](scripts/16_run_model_error_mined_dpo_v3_strong_server.sh)、[scripts/17_resume_dpo_v3_strong_full_gate_server.sh](scripts/17_resume_dpo_v3_strong_full_gate_server.sh)。
+
+## 实验结果总表
+
+### 历史 sample500：仅比较 M2、DPO v1、DPO v2
+
+sample500 是四个 split、每个 500 条的历史 benchmark。表内数值为 split 平均。
+
+| 模型 | Audit Accuracy | High-risk Miss | Evidence Support | 结论 |
+| --- | ---: | ---: | ---: | --- |
+| M2 LoRA-SFT | **0.7735** | 0.2427 | **0.8035** | 历史业务 baseline |
+| DPO v1 | 0.6685 | **0.2373** | 0.7987 | loss 收敛但 Audit 明显负迁移 |
+| DPO v2 | 0.7645 | 0.2546 | 0.7952 | 恢复 Accuracy，HRM 未改善 |
+
+### Train-only train_decode_dev：仅比较 R3 与 DPO v3
+
+| 模型 | JSON / Schema | Audit Accuracy | High-risk Miss | Evidence Support | Error cases |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Structured Repair SFT v3 | 1.000 / 1.000 | **0.9671** | **0.0575** | 0.9876 | 23 |
+| DPO v3 strong checkpoint-15 | 1.000 / 1.000 | 0.8684 | 0.1379 | **0.9904** | 40 |
+
+### DPO v3 alignment probe
+
+24 条 case-disjoint probe 中，checkpoint-15 相对 R3：
+
+- mean task reward：`-0.5003 -> -0.3336`，提升 `0.1667`；
+- Order-ID Pair Rate：`0 -> 0.1111`，提升 `11.11pp`；
+- probe HRM：`0.7500 -> 0.6667`；
+- JSON valid rate 保持 `1.0`，false escalation 保持 `0`。
+
+但 full gate 中 baseline HRM 5 条、DPO HRM 12 条，修复 0 条、新增 7 条，因此局部对齐收益不足以支持业务替换。
+
+![分 benchmark 结果](docs/experiments/phase10_model_error_mined_dpo_v3/figures/post_training_metrics_by_benchmark.png)
+
+训练曲线、probe 曲线、四个案例和逐 case 错误迁移见 [Phase 10 完整报告](docs/experiments/phase10_model_error_mined_dpo_v3/README.md)。
+
+## 五卡训练、模型并行与任务并行
+
+![五卡执行拓扑](docs/experiments/phase10_model_error_mined_dpo_v3/figures/multi_gpu_execution_topology.png)
+
+可编辑源文件：[multi_gpu_execution_topology.drawio](docs/experiments/phase10_model_error_mined_dpo_v3/figures/multi_gpu_execution_topology.drawio)
+
+本项目实际用了四种并行方式。它们解决的问题不同，不能统称为“多卡训练”。
+
+### 1. SFT v3：五进程 DDP
+
+```text
+torchrun --nproc_per_node=5
+  rank0 -> GPU0: 完整 Qwen3-VL + LoRA
+  rank1 -> GPU1: 完整 Qwen3-VL + LoRA
+  ...
+  rank4 -> GPU4: 完整 Qwen3-VL + LoRA
+  NCCL all-reduce LoRA gradients
+```
+
+- 每张卡各有一份完整模型副本，五个进程读取不同 mini-batch。
+- 只有 LoRA 参数参与更新：`43,646,976 / 8,810,770,672 = 0.4954%`。
+- `per_device_train_batch_size=1`、`gradient_accumulation_steps=1`，全局 batch 为 5。
+- 480 条样本完成 `480 / 5 = 96` step，这个 step 数和五个 rank 日志共同证明 DDP 确实工作。
+- BF16 与 gradient checkpointing 降低激活显存；LoRA r=16、alpha=32、dropout=0.05。
+
+DDP 的优势是数据吞吐高；代价是每卡都必须放下完整模型。若单卡连一份完整模型都放不下，增加 GPU 数并不会自动解决单卡 OOM。
+
+### 2. DPO v2/v3：单进程模型切分
+
+DPO 同时需要 policy 和 reference 两套模型。单卡 32GB 无法容纳两套 8B VLM 及前后向状态，因此采用一个 Python 进程配合 `device_map=auto/balanced`：
+
+```text
+one process
+  policy layers    -> GPU0..GPU4
+  reference layers -> GPU0..GPU4
+  one batch flows through layer shards
+```
+
+这是模型分片，不是 DDP：GPU 不保存完整副本，也不处理五个独立 batch。它解决“放不下”，但 pipeline 上不同层的计算量、通信和等待不同，所以不能保证五张卡的 GPU-Util 完全均衡。显存占满只说明参数已放置，不能证明计算利用率高。
+
+DPO v3 使用 `per_device_train_batch_size=1`、`gradient_accumulation_steps=4`、BF16、gradient checkpointing；weak 每 10 step 保存，strong 每 5 step 保存。训练上限和 checkpoint gate 防止为了追 loss 无限制烧算力。
+
+### 3. 推理与 model mining：case sharding
+
+240 x 4 model mining 和 152 条 fast gate 都按 case 切成 5 个 shard。每张 GPU 运行独立模型实例并处理不同 case，完成后由 [merge_inference_shards.py](tools/merge_inference_shards.py) 按 case id 确定性合并、检查重复和缺失。
+
+这种方式是真正的任务并行，适合无梯度生成；某个 shard 中断时只需恢复该 shard，不必重跑全部样本。
+
+### 4. Probe：checkpoint 级并行
+
+10/20/30/40 或 strong 5/10/15/20 checkpoint 分配到不同 GPU 并行跑 24 条 probe。选择脚本读取每个 checkpoint 的同构指标，选出最早满足局部门禁的候选；只有这个候选再跑 152 条 full gate。
+
+## 指标来源、公式与业务含义
+
+指标分为通用模型指标、结构契约指标和项目自定义业务指标。通用指标没有被包装成原创；项目自定义部分用于把“模型看起来会答”转化为“业务可审计”。
+
+记真值为 `y`、预测为 `ŷ`，`N` 为相应指标的有效样本数。
+
+### 通用指标
+
+| 指标 | 定义/公式 | 趋势 | 业务含义 | 代码 |
+| --- | --- | --- | --- | --- |
+| Accuracy | `正确样本数 / N` | 越高越好 | 用于 audit action 等离散预测 | [audit_metrics.py](src/mv_audit/evaluation/audit_metrics.py) |
+| Exact Match | `1[y = ŷ]` 的平均 | 越高越好 | 字段值或 consistency 布尔值完全一致 | [field_metrics.py](src/mv_audit/evaluation/field_metrics.py)、[consistency_metrics.py](src/mv_audit/evaluation/consistency_metrics.py) |
+| Macro-F1 | 各类别 F1 的算术平均 | 越高越好 | 不让数量较多的 low-risk 掩盖 high-risk | [audit_metrics.py](src/mv_audit/evaluation/audit_metrics.py) |
+| IoU | `area(Bp ∩ Bg) / area(Bp ∪ Bg)` | 越高越好 | 证据框与真值框重叠程度 | [bbox_evaluator.py](src/mv_audit/evaluation/bbox_evaluator.py) |
+| SFT loss | assistant target token 的交叉熵 | 越低通常越好 | 衡量 teacher-forcing 拟合，不等同业务准确率 | [train_sft.py](src/mv_audit/training/train_sft.py) |
+| DPO loss | `-log sigmoid(beta * ((logπw-logπref,w) - (logπl-logπref,l)))` | 越低通常越好 | 衡量 chosen 相对 rejected 的偏好，不等同业务成功 | [train_dpo.py](src/mv_audit/training/train_dpo.py) |
+| Preference accuracy | `count(margin > 0) / pair_count` | 越高越好 | pair 上 policy 是否更偏好 chosen |
+| Preference margin | chosen/reference 与 rejected/reference 的 log-ratio 差 | 适度为佳 | 过大可能是 easy-pair 饱和；不同 log-prob 归一化版本不能横比 |
+
+### 结构契约指标
+
+| 指标 | 分母与判定 | 趋势 | 含义 |
+| --- | --- | --- | --- |
+| JSON Validity | 可被 JSON parser 解析的输出数 / 全部输出 | 越高越好 | 输出能否进入后续程序 |
+| Schema Compliance | 通过 `configs/schema/output_schema.json` 的输出数 / 全部输出 | 越高越好 | 字段层级、类型、枚举和 required 是否符合契约 |
+
+解析与 schema 校验见 [json_parser.py](src/mv_audit/evaluation/json_parser.py)。schema guard 是业务输出兜底；alignment reward 和原始质量审计使用 guard 前输出，避免后处理“替模型拿分”。
+
+### 项目自定义业务指标
+
+| 指标 | 精确定义与分母 | 趋势 | 为什么需要 |
+| --- | --- | --- | --- |
+| High-risk Miss, HRM | 在真值 `risk=high` 中，预测缺失、预测风险非 high 或 `audit_result=pass` 的比例 | 越低越好 | 直接衡量高风险漏放，是首要安全门禁 |
+| False Manual Review | 真值 audit=pass 中预测 manual_review 的比例 | 越低越好 | 衡量正常单被无谓推给人工 |
+| False Escalation | 真值 low/pass 中预测 high 或 reject 的比例 | 越低越好 | 防止靠“全部拒绝”虚假降低 HRM |
+| Evidence Support | 预测 evidence 的 `(image_id, doc_type, field, value)` 四元组精确命中真值的比例 | 越高越好 | 结论是否有正确来源和正确值共同支撑 |
+| Evidence Value | 预测 `(field, value)` 命中真值的比例 | 越高越好 | 单独观察值读取能力 |
+| Evidence Source | 预测 `(image_id, doc_type, field)` 命中真值的比例 | 越高越好 | 单独观察证据来源定位 |
+| Hallucination | 预测 evidence 中来源非法、字段在真值中不确定或四元组不被真值支持的比例 | 越低越好 | 检查看似完整但实际编造的证据 |
+| Relaxed bbox | `IoU >= 0.3` 或预测框中心落入真值框 | 越高越好 | OCR 文本框边界略有偏移时仍认可定位正确 |
+| Order-ID Pair Rate | order-id mismatch 真值中，预测同时给出订单截图和报销单两个不同且正确订单号的 case 比例 | 越高越好 | 防止只说“不一致”却不展示矛盾双方 |
+| Error migration | baseline/DPO 错误集合的 fixed、persistent、introduced 数量 | fixed 多、introduced 少 | 判断对齐到底修了谁，又伤了谁 |
+
+Evidence 与 hallucination 见 [evidence_metrics.py](src/mv_audit/evaluation/evidence_metrics.py)、[hallucination_metrics.py](src/mv_audit/evaluation/hallucination_metrics.py)；HRM 与汇总见 [case_scorer.py](src/mv_audit/evaluation/case_scorer.py)、[evaluate_all.py](src/mv_audit/evaluation/evaluate_all.py)；DPO v3 的 order-id 和迁移审计见 [model_mined_dpo_v3.py](tools/model_mined_dpo_v3.py)、[compare_dpo_v3_results.py](tools/compare_dpo_v3_results.py)。
+
+### 自定义 task reward
+
+task reward 是偏好 pair 审计和 probe 的项目评分，不等同于 Audit Accuracy：
+
+```text
+R = +0.15 field
+    +0.15 consistency
+    +0.20 anomaly
+    +0.15 audit
+    +0.15 evidence
+    +0.10 JSON
+    +0.10 uncertainty
+    +0.25 order-id pair
+    -0.20 hallucination
+    -0.40 high-risk miss
+    -0.50 missing order-id pair
+    -0.40 false escalation
+```
+
+最终 reward 会裁剪；非法 JSON/schema 或 high-risk pass 直接强惩罚为 `-1`。实现见 [reward_function.py](src/mv_audit/training/reward_function.py) 及 model-mining 工具。reward 的作用是表达训练偏好，最终候选仍由独立业务指标决定。
+
+## 问题、原因与解决方案
+
+| 问题 | 根因 | 诊断证据 | 解决方案与结果 |
+| --- | --- | --- | --- |
+| 训练样本缺图 | 数据路径与服务器实际图片资产不一致 | converter 报缺失图片，训练无法可靠启动 | 构造 existing-images 子集并在 dry-run 统计缺失，不从 Test 补数据 |
+| `field_extraction` 被扁平到根部 | 生成模型未稳定遵循嵌套 schema | 20 条输出 JSON 可解析但 schema invalid | 增加 schema guard/后处理并重跑 152 条；先消除结构污染再判断模型能力 |
+| order-id 高风险漏检 | 小字号视觉读取弱，target 没显式表达矛盾双方 | 剩余 both_wrong 集中为无双侧 order-id evidence | R2/R3 显式区分订单截图与报销单 order_id，前置双侧 evidence 并加 verifier |
+| DPO v1 loss 很漂亮但业务退化 | chosen 是已学答案，rejected 是容易的规则篡改 | preference accuracy 早到 1.0，margin 最终约 74.7 | 不再用训练 loss 当业务结论，改为 model-error-mined hard pairs |
+| DPO margin 虚高 | 长 JSON 使用 token log-prob 累加，长度放大差值 | v1/v2 与业务 KPI 脱钩 | v3 改 assistant-token mean log-prob，并禁止跨版本直接比较 margin |
+| DPO v3 局部提升、全量退化 | 训练/probe 偏 order-id，审核动作边界向 manual_review 漂移 | probe reward +0.167；full gate 新增 7 条 HRM，14 条 reject 变 manual_review | probe 与 full gate 分层；cp15 仅保留 research candidate |
+| 正常样本过度升级 | 单独奖励 high/reject 会诱导全量拒绝 | false escalation/错误迁移可见 | 加 low/pass calibration 和 false escalation 惩罚 |
+| 单卡 policy/reference OOM | 8B VLM 的两套模型、激活和优化状态超过 32GB | 五候选单卡并发失败 | DPO 改单进程五卡模型切分；SFT 仍用五进程 DDP |
+| SCP 中断或只拉到部分文件 | 大文件和长连接不稳定 | 本地文件存在不等于归档完整 | 单 adapter 打包、重拉、archive hash + file hash 双重校验 |
+| watcher 误判终态 | fallback 或脚本尾部异常写入 `FAILED` | 结果已生成但 watcher 拒绝关机 | `FAILED` 优先保护，人工核验 manifest 后再关机 |
+| BOM/UTF-8 问题 | Windows/PowerShell 与 Linux shell 编码差异 | shebang 或中文报告异常 | UTF-8 显式读写、XML/Markdown 解析和 replacement character 检查 |
+
+核心经验是把“看清字段、表达证据、遵守 schema、做对决策”分开评测，否则会把感知错误交给 RL，或把后处理修复误认为模型能力提升。
+
+## 代码结构与输入输出
+
+完整逐文件说明见 [docs/code_inventory.md](docs/code_inventory.md)。下面是复现主链所需的精简地图。
+
+| 目录/文件 | 输入 | 作用 | 输出 |
+| --- | --- | --- | --- |
+| `src/mv_audit/data_gen/` | 字典、YAML、schema、seed | 生成业务 case、注入异常、风险打标、case split | raw case JSONL |
+| `src/mv_audit/rendering/` | raw cases | 渲染四类凭证并记录字段框 | images、bbox annotations |
+| `src/mv_audit/converters/` | cases、annotations、images | 转换 SFT/DPO/GRPO/repair 数据 | train/val/pair JSONL |
+| [train_sft.py](src/mv_audit/training/train_sft.py) | base model、adapter、SFT JSONL、YAML | LoRA-SFT/Repair SFT | adapter、trainer logs |
+| [train_dpo.py](src/mv_audit/training/train_dpo.py) | policy/reference、preference pairs | DPO/IPO/weighted DPO | checkpoints、history、probe stats |
+| [reward_function.py](src/mv_audit/training/reward_function.py) | prompt、truth、completion | 字段/证据/风险组合 reward | scalar reward 与分项 |
+| [batch_inference.py](src/mv_audit/inference/batch_inference.py) | model、adapter、case images | 多图生成、断点写入 | predictions JSONL |
+| [schema_guard.py](src/mv_audit/inference/schema_guard.py) | raw model JSON | 恢复嵌套 schema、order-id guard | 合法业务输出 |
+| [sample_model_mined.py](src/mv_audit/inference/sample_model_mined.py) | R3、Train-only pool | 多次采样 | raw completions |
+| [evaluate_all.py](src/mv_audit/evaluation/evaluate_all.py) | predictions、ground truth、schema | 汇总结构、字段、审计、证据和 bbox | metrics.json、errors.jsonl |
+| [repair_paired_analysis.py](tools/repair_paired_analysis.py) | baseline/new errors | paired diff 与错误归因 | attribution JSON/Markdown |
+| [model_mined_dpo_v3.py](tools/model_mined_dpo_v3.py) | completions、truth、reward | 选 hard pairs、probe 审计 | train/holdout/probe pairs |
+| [build_phase10_post_training_report.py](tools/build_phase10_post_training_report.py) | CSV、metrics、errors、logs | 汇总结果与案例 | Phase 10 表格/JSON/PNG |
+| [audit_model_lineage_archive.py](tools/audit_model_lineage_archive.py) | lineage manifest、本地 adapter | 校验配置、权重、hash、父级 | audit JSON/Markdown |
+
+主流水线入口：
+
+```text
+scripts/01_*    数据生成、异常注入和切分
+scripts/02_*    图片渲染
+scripts/03_*    训练集转换
+scripts/04_*    SFT
+scripts/05_*    DPO/IPO
+scripts/07_*    推理
+scripts/08_*    评测
+scripts/12_*    Repair SFT v3
+scripts/13-17_* Model-Mined DPO v3 与 full gate
+```
+
+## 服务器训练、推理、评测与归档
+
+以下命令使用占位符，不记录密码、真实密钥或可复用凭据。
+
+### 1. 开机后的只读检查
+
+```bash
+ssh -p <PORT> <USER>@<HOST>
+cd /root/autodl-tmp/VLM-Post-Training
+export PATH=/root/miniconda3/bin:/root/anaconda3/bin:$PATH
+nvidia-smi
+pgrep -af 'train_sft|train_dpo|batch_inference|sample_model_mined'
+git status --short
+```
+
+输入是服务器现状；输出是 GPU、进程、仓库和已有 runroot。若已有训练，不重复启动。
+
+### 2. 单元测试与 dry-run
+
+```bash
+PYTHONPATH=src pytest -q
+python -m compileall src/mv_audit tools tests
+DRY_RUN=1 MAX_SAMPLES=4 bash scripts/12_run_order_id_repair_sft_v3_server.sh
+```
+
+dry-run 检查模型/adapter 可加载、图片存在、label mask 正确、JSON/schema 可评测、reward 对 high-risk pass 强惩罚。dry-run 通过不等于模型有效。
+
+### 3. 显式批准后训练
+
+```bash
+ALLOW_TRAINING=1 bash scripts/12_run_order_id_repair_sft_v3_server.sh
+ALLOW_TRAINING=1 bash scripts/13_run_model_mined_dpo_v3_server.sh
+```
+
+真实流程只运行当次批准的阶段。日志写入 `outputs/runtime/`，checkpoint 写入 `outputs/checkpoints/`；状态文件供 watcher 判断。
+
+### 4. 五卡推理、合并与评测
+
+```text
+train_decode_dev.jsonl
+  -> shard-0..4
+  -> GPU0..4 独立 predictions
+  -> deterministic merge
+  -> evaluate_all
+  -> metrics.json + errors.jsonl
+```
+
+每个 shard 按 case id 独立，可断点续跑；merge 后必须验证总数为 152、无重复、无缺失。SFT gate 看 JSON/schema、Audit、HRM、Evidence；DPO 还必须检查 false escalation、error migration 和 alignment probe。
+
+### 5. 归档和关机
+
+远端只打包可加载 adapter 与 processor/tokenizer metadata；历史 optimizer/checkpoint 子目录不进入 minimal archive。下载后比较 archive SHA256，再解包校验 `adapter_config.json`、权重大小和 safetensors header。
+
+```powershell
+python tools/audit_model_lineage_archive.py --strict --output_json docs/experiments/phase10_model_error_mined_dpo_v3/model_lineage_archive_audit.json --output_md docs/experiments/phase10_model_error_mined_dpo_v3/model_lineage_archive_audit.md
+```
+
+只有 manifest 完整且无 `FAILED` 才请求 `shutdown -h now`，随后确认 SSH 关闭。归档失败时保留日志和 manifest，不删除远端文件。
+
+## 模型谱系与本地归档
+
+| 模型 | 父级 | 角色 | 本地状态 | adapter 权重 |
+| --- | --- | --- | --- | ---: |
+| M2 SFT | base Qwen3-VL | historical sample500 baseline | `VERIFIED` | 174,663,096 B |
+| Repair R1 | M2 | high-risk repair stage 1 | `VERIFIED` | 174,663,096 B |
+| Repair R2 | R1 | order-id repair stage 2 | `VERIFIED` | 174,663,096 B |
+| Repair R3 | R2 | production candidate, not deployed | `VERIFIED` | 174,663,096 B |
+| DPO weak checkpoint-40 | R3 | strong continuation initialization | `VERIFIED` | 174,663,096 B |
+| DPO strong checkpoint-15 | weak-40 | alignment research candidate | `VERIFIED` | 174,663,096 B |
+
+机器可读清单：[model_lineage_archive.json](docs/experiments/phase10_model_error_mined_dpo_v3/model_lineage_archive.json)；审计结果：[JSON](docs/experiments/phase10_model_error_mined_dpo_v3/model_lineage_archive_audit.json) / [Markdown](docs/experiments/phase10_model_error_mined_dpo_v3/model_lineage_archive_audit.md)。
+
+M2/R1/R2/weak-40 的 minimal tar 在 `outputs/model_candidates/model_lineage/archives/`；R3 与 strong-15 已有独立归档。minimal 表示保留推理复现所需 adapter，不声称包含 optimizer state 或每个历史 checkpoint。
+
+## AI 辅助开发方法
+
+项目采用 AI-assisted development，而不是把 AI 生成的代码未经核验直接投入训练：
+
+1. **人定义问题和边界**：业务 schema、风险规则、Train/Test 隔离、预算和停止条件。
+2. **AI 辅助实现**：草拟 converter、训练脚本、分析工具、测试和文档，辅助搜索错误路径。
+3. **静态审计**：逐文件 inventory，核对输入输出、接口、配置路径和数据来源。
+4. **小规模验证**：compile、pytest、generation smoke、reward smoke、label-mask test 和 dry-run。
+5. **实验门禁**：先 train_decode_dev，再决定是否扩大；loss、pair accuracy 不替代业务指标。
+6. **人工决策**：根据 errors.jsonl、paired diff 和案例决定做 SFT repair、DPO 或停止训练。
+7. **证据归档**：原始日志、metrics、predictions、错误案例、图表和 SHA256 可回查。
+
+这种表述既诚实说明 AI 的参与，也体现需求拆解、代码审计、实验设计、成本控制和结果验证能力。
+
+## 最终模型选择
+
+![模型选择门禁](docs/experiments/phase10_model_error_mined_dpo_v3/figures/model_selection_gate.png)
+
+- **Structured Repair SFT v3**：`PRODUCTION_CANDIDATE / NOT_DEPLOYED`。通过 152 条 Train-only 开发门禁，final holdout 未运行。
+- **DPO v3 strong checkpoint-15**：`ALIGNMENT_RESEARCH_CANDIDATE / ALIGNMENT_GATE_NOT_MET`。probe 有局部可测收益，full gate 不允许部署。
+- **M2**：`HISTORICAL_SAMPLE500_BASELINE`。用于保留历史 benchmark，不与 train_decode_dev 横向伪比较。
+
+最终正向结论是：完成可复现的 SFT + preference alignment 全链路，证明 model-mined DPO 能改变目标偏好，同时用独立业务门禁识别其泛化边界，并把最稳健的 SFT 与研究型 DPO 分层治理。
+
+简历与面试口径见 [docs/resume_vlm_post_training.md](docs/resume_vlm_post_training.md)。
+
+## 技术附录：历史实验与工程实录
+
+以下章节保留早期数据、损失函数、M0-M3v2 结果、服务器故障和恢复过程。部分章节中的“当前”是相应历史阶段的状态；最终状态以本文前半部分和 [model_selection.json](docs/experiments/phase10_model_error_mined_dpo_v3/model_selection.json) 为准。
 
 ## 摘要与核心结论
 
@@ -19,9 +482,11 @@ MultiVoucher-Audit 是一个面向企业费用报销一致性审计的 VLM 后�
 | DPO v1 是负结果 | M3 的 DPO loss 降到 `0.000568`、preference margin 到 `74.731`，但 `Audit Accuracy` 从 M2 `0.7735` 降到 `0.6685` | pair 训练成功不等于业务成功 |
 | DPO v2 部分修复 | M3v2 `Audit Accuracy=0.7645`，接近 M2；但 `High-risk Miss Rate=0.2546`，差于 M2 `0.2427` | 修复了 accuracy 崩塌，但没有解决高风险漏检 |
 | two-candidate ablation 不值得扩大 | `dpo_v2_baseline` 与 `auxdpo_v2_strong` 在 Train decode dev 核心指标相同，High-risk Miss 都是 `0.2299` | 继续烧完整 DPO/IPO ablation 不划算 |
-| 下一步应做 High-risk Repair | 已准备 120 条 Train-only high-risk non-pass repair cases 和 120 条 calibration mix | 小规模 SFT/规则约束闭环优先于继续 DPO/GRPO |
+| Structured Repair SFT v3 是当前开发候选 | 在 152 条 `train_decode_dev` 上 `Audit Accuracy=0.9671`、`High-risk Miss=0.0575`、JSON/Schema 均为 `1.0` | 标记为 `PRODUCTION_CANDIDATE`，但 final holdout 未运行、尚未部署 |
+| DPO v3 有局部对齐信号 | 24 条 probe reward 提升 `0.1667`、order-id 双侧证据命中率提升 `11.11pp` | 说明偏好信号可改变目标行为 |
+| DPO v3 未通过全量门禁 | 152 条上 `Audit Accuracy=0.8684`、`High-risk Miss=0.1379` | 仅标记为 `ALIGNMENT_RESEARCH_CANDIDATE`，禁止替代 SFT v3 |
 
-一句话总结：M2 SFT 是目前业务基线；DPO loss/margin 的优化没有可靠转化为高风险漏检改善，因此 Phase08 应被写成 DPO negative result，并转向 High-risk Miss 的数据与输出契约修复。
+一句话总结：M2 仍是冻结的 sample500 历史基线；Structured Repair SFT v3 是当前 Train-only 开发门禁上的 production candidate，DPO v3 完成了可测量的局部偏好对齐，但因全量门禁未通过而保留为 research candidate。
 
 ## 1. 任务定义与 Benchmark
 
@@ -81,7 +546,9 @@ case_id
 | M3 | `M2 + DPO v1 adapter` | 已完成 DPO sample1000 和 sample500，业务失败 |
 | M3v2 | `M2 + conservative DPO v2 adapter` | 已完成 DPO v2 和 sample500，部分修复但未达目标 |
 | M4 | `M2/M3 + GRPO` | 未正式完成，仅有 smoke 级别代码与验证 |
-| repair_sft_r1 | `M2 + High-risk Repair SFT` | 已准备配置和数据包，服务器训练未完成 |
+| repair_sft_r1/r2 | `M2 + High-risk Repair SFT` | 历史修复分支，不是当前候选 |
+| repair_sft_r3 | `R2 + Order-ID Structured Repair SFT` | `PRODUCTION_CANDIDATE`；152 条开发门禁完成，未运行 final holdout、未部署 |
+| DPO v3 checkpoint-15 | `repair_sft_r3 + Model-Error-Mined DPO` | `ALIGNMENT_RESEARCH_CANDIDATE`；probe 有提升，全量 gate 未通过 |
 
 ## 2. 合成数据集 MultiVoucher-Audit
 
@@ -1023,15 +1490,15 @@ Repair Pack 约束：
 | two-candidate decode dev | `docs/experiments/phase08_loss_ablation_two_candidate_decode_20260812_5gpu_ablation_r3/` |
 | High-risk Repair Pack | `docs/experiments/phase08_high_risk_repair_pack_20260813/` |
 
-### 13.4 当前未完成任务
+### 13.4 当时的待办及最终处理
 
-| 任务 | 状态 |
+| Phase 8 当时的待办 | 最终处理 |
 | --- | --- |
-| repair_sft_r1 服务器训练 | 未完成 |
-| repair_sft_r1 train_decode_dev 推理与评测 | 未完成 |
-| repair_sft_r1 是否进入 sample500 | 待小集 gate 决定 |
-| 正式 GRPO/M4 | 暂停，不建议在 DPO 未稳定前扩大 |
-| Phase08 最终论文式 negative result | README 已整理主结论，仍可在后续补 repair_sft_r1 结果 |
+| repair_sft_r1 服务器训练 | 后续已完成 R1，并继续演进到 R2/R3；六级 adapter 谱系已归档 |
+| repair_sft_r1 train_decode_dev 推理与评测 | 后续已完成 paired diff、schema/order-id 归因和 R3 152-case gate |
+| repair_sft_r1 是否进入 sample500 | 没有进入；Phase 9/10 坚持 Train-only 开发边界 |
+| 正式 GRPO/M4 | 未扩大；最终选择成本更低、可复现的 Model-Mined DPO 作为偏好对齐研究 |
+| Phase08 negative result | 已纳入完整实验链，并由 DPO v3 probe/full gate 补充方法诊断 |
 
 ### 13.5 Git 与资产边界
 
@@ -1084,8 +1551,8 @@ rg -n "metrics_summary|High-risk Miss|Audit Accuracy|READY_TO_ARCHIVE|FAILED" do
 
 | 项目 | 路径 |
 | --- | --- |
-| SSH 用户和主机 | `root@connect.westc.seetacloud.com` |
-| 端口 | 随当次服务器实例变化，历史实例使用过 `51327` |
+| SSH 用户和主机 | `<USER>@<HOST>` |
+| 端口 | 随当次服务器实例变化，运行时通过 `<PORT>` 传入 |
 | 远端代码仓库 | `/root/autodl-tmp/VLM-Post-Training` |
 | 远端上传数据 | `/root/autodl-tmp/data` |
 | 可用 Python | `/root/miniconda3/bin/python` |
@@ -1093,7 +1560,7 @@ rg -n "metrics_summary|High-risk Miss|Audit Accuracy|READY_TO_ARCHIVE|FAILED" do
 代表性连接方式：
 
 ```bash
-ssh -p <PORT> root@connect.westc.seetacloud.com
+ssh -p <PORT> <USER>@<HOST>
 cd /root/autodl-tmp/VLM-Post-Training
 export PATH="/root/miniconda3/bin:/root/anaconda3/bin:$PATH"
 ```
@@ -1280,7 +1747,7 @@ docs/experiments/phase08_loss_ablation_two_candidate_decode_20260812_5gpu_ablati
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/10_watch_and_archive_dpo_v2_ablation.ps1 `
-  -HostName connect.westc.seetacloud.com `
+  -HostName <HOST> `
   -Port <PORT> `
   -User root `
   -RemoteProject /root/autodl-tmp/VLM-Post-Training `
@@ -1354,7 +1821,7 @@ remote_failed_no_shutdown=2026-08-13T13:31:55+08:00
 
 ```bash
 # 连接服务器
-ssh -p <PORT> root@connect.westc.seetacloud.com
+ssh -p <PORT> <USER>@<HOST>
 
 # 进入项目并固定 Python/Conda 路径
 cd /root/autodl-tmp/VLM-Post-Training
@@ -1403,10 +1870,10 @@ Get-Content -Encoding UTF8 README.md -TotalCount 60
 | `scripts/10_watch_and_archive_dpo_v2_ablation.ps1` | 本地 watcher | 从远端读取真实 tar 路径，拉取归档，校验 manifest，必要时 append README，校验通过后可发关机命令 | 已修正为按真实 tar 目录名解压 |
 | `outputs/runtime/.../curtail_after_auxstrong.sh` | 远端临时截停脚本 | 在第二个候选完成后停止剩余三候选，并恢复 baseline/auxstrong Train decode dev | 远端生成，归档日志记录了执行过程 |
 | `logs/server_auto_shutdown_after_archive_20260813_090155.sh` | 服务器端 watcher | 本地电脑关闭时，服务器自行等待归档 tar 可读后关机；若 `FAILED` 存在则不关机 | 当次因 `FAILED` 触发保护，未关机 |
-| `scripts/11_run_high_risk_repair_sft_r1_server.sh` | 未来 repair SFT 服务器入口 | 构造 repair mix，SFT dry-run，训练 repair_sft_r1，只跑 Train decode dev，归档结果 | 已准备，服务器正式训练未完成 |
+| `scripts/11_run_high_risk_repair_sft_r1_server.sh` | repair SFT 服务器入口 | 构造 repair mix，SFT dry-run，训练 repair_sft_r1，只跑 Train decode dev，归档结果 | 已完成历史 R1 阶段，后续继续到 R2/R3 |
 | `src/mv_audit/analysis/high_risk_repair_pack.py` | 分析脚本 | 诊断 high-risk miss，生成 120 条 Train-only repair cases | 已生成 repair pack |
 | `src/mv_audit/converters/build_high_risk_repair_sft_mix.py` | 数据构造脚本 | 将 120 条 repair cases 与 120 条 calibration 样本混合为 repair SFT 训练集 | 已 dry-run 验证 |
-| `src/mv_audit/analysis/archive_high_risk_repair_sft.py` | 归档脚本 | 归档 repair_sft_r1 的配置、日志、metrics、摘要和 manifest，不默认归档大 checkpoint | 已准备，等待正式 repair_sft_r1 跑完 |
+| `src/mv_audit/analysis/archive_high_risk_repair_sft.py` | 归档脚本 | 归档 repair_sft_r1 的配置、日志、metrics、摘要和 manifest，不默认归档大 checkpoint | 已用于历史 repair 流程；最终六级 adapter 由 lineage audit 统一核验 |
 
 ### 14.12 服务器复现入口和安全边界
 
@@ -1421,3 +1888,53 @@ Get-Content -Encoding UTF8 README.md -TotalCount 60
 7. 自动关机必须以“无 `FAILED` 且归档可读”为前提。
 
 本章列出的服务器命令是工程实现记录，不是无条件复跑说明。尤其是 DPO v2、repair_sft_r1、sample500/test 推理都属于昂贵或有数据边界要求的操作，不能在没有新确认的情况下直接执行。
+
+## 15. Structured Repair SFT v3 与 Model-Mined DPO v3
+
+Phase09/10 将项目从历史 M2/DPO v1/v2 扩展到面向真实残留错误的 Structured Repair SFT 和 model-error-mined preference alignment。完整实验报告见 [Phase 10 Model-Error-Mined DPO v3](docs/experiments/phase10_model_error_mined_dpo_v3/README.md)。
+
+### 15.1 后训练链路
+
+![VLM 后训练链路](docs/experiments/phase10_model_error_mined_dpo_v3/figures/post_training_pipeline.png)
+
+可编辑源文件：[post_training_pipeline.drawio](docs/experiments/phase10_model_error_mined_dpo_v3/figures/post_training_pipeline.drawio)
+
+Structured Repair SFT v3 使用 480 条 Train-only mix，从 R2 adapter 继续训练；Model-Mined DPO v3 从 SFT v3 的真实生成错误构造困难偏好对，并使用独立 probe 和 152 条 full gate 两级选择。sample500/Test/final holdout 均未用于 Phase10 调参或候选选择。
+
+### 15.2 分 benchmark 指标
+
+历史 sample500 与当前 train_decode_dev 不是同一评测协议，必须分栏报告：
+
+| Benchmark | 模型 | Audit Accuracy | High-risk Miss | Evidence Support | 状态 |
+| --- | --- | ---: | ---: | ---: | --- |
+| sample500 四 split 平均 | M2 SFT | 0.7735 | 0.2427 | 0.8035 | 历史 baseline |
+| sample500 四 split 平均 | DPO v1 | 0.6685 | 0.2373 | 0.7987 | research ablation |
+| sample500 四 split 平均 | DPO v2 | 0.7645 | 0.2546 | 0.7952 | research ablation |
+| train_decode_dev 152 | Structured Repair SFT v3 | **0.9671** | **0.0575** | 0.9876 | production candidate |
+| train_decode_dev 152 | DPO v3 checkpoint-15 | 0.8684 | 0.1379 | **0.9904** | alignment research candidate |
+
+![分 benchmark 指标](docs/experiments/phase10_model_error_mined_dpo_v3/figures/post_training_metrics_by_benchmark.png)
+
+机器可读总表：[post_training_metrics.csv](docs/experiments/phase10_model_error_mined_dpo_v3/post_training_metrics.csv)
+
+### 15.3 DPO v3 的有效信号与边界
+
+checkpoint-15 在 24 条 case-disjoint alignment probe 上将 mean task reward 提升 `0.1667`，order-id 双侧证据命中率提升 `11.11pp`，并修复 `MV_MAIN_004522`、`MV_MAIN_020454` 两个 probe case。这证明偏好训练能够改变目标行为。
+
+但在 152 条 full gate 上，DPO v3 保留了原 5 条 High-risk Miss 并新增 7 条；14 条应拒绝样本被改成 `manual_review`。`MV_MAIN_023069`、`MV_MAIN_015818` 都属于“amount mismatch 已识别、证据正确、审核动作退化”的过拟合案例。因此该 checkpoint 不具备部署资格。
+
+![DPO v3 probe](docs/experiments/phase10_model_error_mined_dpo_v3/figures/dpo_v3_probe_checkpoints.png)
+
+### 15.4 最终模型选择
+
+![模型选择门禁](docs/experiments/phase10_model_error_mined_dpo_v3/figures/model_selection_gate.png)
+
+| 角色 | 模型 | 发布状态 |
+| --- | --- | --- |
+| `PRODUCTION_CANDIDATE` | `repair_sft_r3` | `NOT_DEPLOYED`；final holdout 未运行 |
+| `ALIGNMENT_RESEARCH_CANDIDATE` | DPO v3 checkpoint-15 | `deployment_eligible=false`；全量 gate 未通过 |
+| `HISTORICAL_SAMPLE500_BASELINE` | M2 SFT | 冻结历史 benchmark |
+
+机器可读选择记录见 [model_selection.json](docs/experiments/phase10_model_error_mined_dpo_v3/model_selection.json)，简历和面试口径见 [docs/resume_vlm_post_training.md](docs/resume_vlm_post_training.md)。
+
+SFT v3 adapter 已归档到 `outputs/model_candidates/repair_sft_r3/` 并完成远端/本地 SHA256 一致性校验；归档后服务器已关机。该状态仍是 `PRODUCTION_CANDIDATE / NOT_DEPLOYED`，不能解读为已经运行 final holdout 或完成线上部署。

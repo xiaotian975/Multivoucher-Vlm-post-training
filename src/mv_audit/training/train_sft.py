@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -79,14 +80,22 @@ def _validate_examples(examples: list[SFTExample], *, path: str | Path) -> None:
             raise ValueError(f"Assistant answer case_id mismatch for {example.case_id}.")
 
 
-def _conversation(example: SFTExample, *, include_answer: bool) -> list[dict[str, Any]]:
-    content: list[dict[str, str]] = []
+def _conversation(
+    example: SFTExample,
+    *,
+    include_answer: bool,
+    image_max_pixels: int | None = None,
+) -> list[dict[str, Any]]:
+    content: list[dict[str, Any]] = []
     for item in example.images:
         image_id = str(item.get("image_id") or "")
         doc_type = str(item.get("doc_type") or "")
         image_path = Path(str(item["image_path"])).resolve()
         content.append({"type": "text", "text": f"{image_id}: {doc_type}"})
-        content.append({"type": "image", "image": image_to_message_uri(image_path)})
+        image_content: dict[str, Any] = {"type": "image", "image": image_to_message_uri(image_path)}
+        if image_max_pixels is not None:
+            image_content["max_pixels"] = image_max_pixels
+        content.append(image_content)
     content.append({"type": "text", "text": example.user_prompt})
 
     messages: list[dict[str, Any]] = [{"role": "user", "content": content}]
@@ -143,8 +152,9 @@ class SFTDataset:
 class DataCollatorForQwenVLSFT:
     """Build multimodal batches and mask non-assistant tokens from loss."""
 
-    def __init__(self, processor: Any) -> None:
+    def __init__(self, processor: Any, *, image_max_pixels: int | None = None) -> None:
         self.processor = processor
+        self.image_max_pixels = image_max_pixels
         tokenizer = getattr(processor, "tokenizer", processor)
         self.pad_token_id = int(getattr(tokenizer, "pad_token_id", 0) or 0)
 
@@ -155,8 +165,16 @@ class DataCollatorForQwenVLSFT:
         except ImportError as exc:
             raise ImportError("torch and qwen-vl-utils are required for training.") from exc
 
-        full_messages = _conversation(example, include_answer=True)
-        prompt_messages = _conversation(example, include_answer=False)
+        full_messages = _conversation(
+            example,
+            include_answer=True,
+            image_max_pixels=self.image_max_pixels,
+        )
+        prompt_messages = _conversation(
+            example,
+            include_answer=False,
+            image_max_pixels=self.image_max_pixels,
+        )
 
         full_text = self.processor.apply_chat_template(full_messages, tokenize=False, add_generation_prompt=False)
         prompt_text = self.processor.apply_chat_template(prompt_messages, tokenize=False, add_generation_prompt=True)
@@ -217,7 +235,7 @@ class DataCollatorForQwenVLSFT:
 def _train(config: dict[str, Any], *, max_samples: int | None) -> None:
     try:
         import torch
-        from peft import LoraConfig, get_peft_model
+        from peft import LoraConfig, PeftModel, get_peft_model
         from transformers import AutoProcessor, Trainer, TrainingArguments
     except ImportError as exc:
         raise ImportError("transformers, peft, and torch are required for real SFT training.") from exc
@@ -231,16 +249,25 @@ def _train(config: dict[str, Any], *, max_samples: int | None) -> None:
 
     set_random_seed(int(config.get("seed", 42)))
     train_examples = _read_examples(data_config["train_file"], max_samples=max_samples)
-    val_limit = None if max_samples is None else max(1, min(max_samples, 8))
-    val_examples = _read_examples(data_config["val_file"], max_samples=val_limit)
+    eval_enabled = str(train_config.get("eval_strategy", "steps")).lower() != "no"
+    val_examples: list[SFTExample] = []
+    if eval_enabled:
+        val_limit = None if max_samples is None else max(1, min(max_samples, 8))
+        val_examples = _read_examples(data_config["val_file"], max_samples=val_limit)
     _validate_examples(train_examples, path=data_config["train_file"])
-    _validate_examples(val_examples, path=data_config["val_file"])
+    if val_examples:
+        _validate_examples(val_examples, path=data_config["val_file"])
 
     model_path = resolve_model_path(model_config)
     processor = AutoProcessor.from_pretrained(model_path, trust_remote_code=bool(model_config.get("trust_remote_code", True)))
     model_class = resolve_model_class()
+    local_rank = int(os.environ.get("LOCAL_RANK", "-1"))
+    device_map: Any = model_config.get("device_map", "auto")
+    if local_rank >= 0:
+        device_map = {"": local_rank}
+        torch.cuda.set_device(local_rank)
     model_kwargs: dict[str, Any] = {
-        "device_map": model_config.get("device_map", "auto"),
+        "device_map": device_map,
         "trust_remote_code": bool(model_config.get("trust_remote_code", True)),
     }
     dtype = model_config.get("dtype", "auto")
@@ -255,15 +282,24 @@ def _train(config: dict[str, Any], *, max_samples: int | None) -> None:
         if hasattr(model, "enable_input_require_grads"):
             model.enable_input_require_grads()
 
-    peft_config = LoraConfig(
-        r=int(lora_section.get("r", 16)),
-        lora_alpha=int(lora_section.get("alpha", 32)),
-        lora_dropout=float(lora_section.get("dropout", 0.05)),
-        target_modules=list(lora_section.get("target_modules") or []),
-        bias="none",
-        task_type="CAUSAL_LM",
-    )
-    model = get_peft_model(model, peft_config)
+    base_adapter_dir = train_config.get("base_adapter_dir")
+    if base_adapter_dir:
+        adapter_path = Path(str(base_adapter_dir))
+        required = [adapter_path / "adapter_config.json", adapter_path / "adapter_model.safetensors"]
+        missing = [str(path) for path in required if not path.exists()]
+        if missing:
+            raise FileNotFoundError(f"Base SFT adapter is incomplete: {missing}")
+        model = PeftModel.from_pretrained(model, str(adapter_path), is_trainable=True)
+    else:
+        peft_config = LoraConfig(
+            r=int(lora_section.get("r", 16)),
+            lora_alpha=int(lora_section.get("alpha", 32)),
+            lora_dropout=float(lora_section.get("dropout", 0.05)),
+            target_modules=list(lora_section.get("target_modules") or []),
+            bias="none",
+            task_type="CAUSAL_LM",
+        )
+        model = get_peft_model(model, peft_config)
     model.print_trainable_parameters()
 
     output_dir = str(train_config.get("output_dir", "outputs/checkpoints/sft"))
@@ -283,18 +319,20 @@ def _train(config: dict[str, Any], *, max_samples: int | None) -> None:
         save_strategy=str(train_config.get("save_strategy", "steps")),
         save_total_limit=int(train_config.get("save_total_limit", 2)),
         remove_unused_columns=False,
+        ddp_find_unused_parameters=False if local_rank >= 0 else None,
         report_to=list(train_config.get("report_to", [])),
     )
     trainer = Trainer(
         model=model,
         args=args,
         train_dataset=SFTDataset(train_examples),
-        eval_dataset=SFTDataset(val_examples),
+        eval_dataset=SFTDataset(val_examples) if val_examples else None,
         data_collator=DataCollatorForQwenVLSFT(processor),
     )
     trainer.train()
     trainer.save_model(output_dir)
-    processor.save_pretrained(output_dir)
+    if trainer.is_world_process_zero():
+        processor.save_pretrained(output_dir)
 
 
 def parse_args() -> argparse.Namespace:

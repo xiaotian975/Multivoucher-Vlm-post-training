@@ -117,6 +117,10 @@ def build_prompt(case: dict[str, Any], image_items: list[dict[str, str]], *, tas
         "必须使用字段 case_id、field_extraction、consistency_check、anomaly_types、risk_level、"
         "audit_result、reason、evidence、uncertainty。\n"
         "不得输出 primary_anomaly_type 或 evidence_sufficient。\n"
+        "检查订单号时必须分别读取订单截图(order)和报销申请单(reimbursement_form)中的 order_id；"
+        "如果两者可见且不同，必须设置 consistency_check.order_id_consistent=false，"
+        "anomaly_types 包含 order_id_mismatch，risk_level=high，audit_result=reject_recommendation，"
+        "并在 evidence 中同时给出这两处 order_id 证据。\n"
         "bbox 必须使用 0 到 1000 的 [x1, y1, x2, y2] 归一化坐标。\n"
         "输入图片如下：\n"
         + "\n".join(image_lines)

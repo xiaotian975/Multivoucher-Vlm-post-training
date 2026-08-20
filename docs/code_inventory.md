@@ -1,8 +1,56 @@
 # MultiVoucher-Audit 代码程序清单
 
-更新时间：2026-08-13
+更新时间：2026-08-20
 
-本文面向“项目几乎全程由 AI 生成、但需要理解每块代码在做什么”的读者。它不是 API 文档，而是代码地图：每个文件负责什么、属于 SFT/DPO/GRPO/推理/评测中的哪一段、输入输出是什么、和其他文件怎么连接。
+本文面向通过 AI-assisted development 完成项目、但需要真正理解每块代码的读者。它不是 API 文档，而是代码地图：每个文件负责什么、属于 SFT/DPO/GRPO/推理/评测中的哪一段、输入输出是什么、和其他文件怎么连接。AI 负责辅助草拟和排查，工程结论仍由代码审计、测试门禁、原始产物和人工模型选择支撑。
+
+## 2026-08-20 收尾阶段新增代码
+
+本节是 Phase 9/10 的增量索引，优先覆盖 Structured Repair SFT v3、Model-Mined DPO v3、schema guard、报告和模型谱系归档。旧阶段逐文件说明继续保留在后文。
+
+| 文件 | 类型 | 输入 | 核心职责 | 输出 |
+| --- | --- | --- | --- | --- |
+| `src/mv_audit/inference/schema_guard.py` | 推理后处理 | 模型原始 JSON、schema、可选真值上下文 | 恢复被扁平的 `field_extraction`，执行 order-id 结构 guard | schema 合法的业务 JSON |
+| `src/mv_audit/inference/sample_model_mined.py` | model mining | R3 adapter、Train-only case pool、采样参数 | 对 case 做多次随机生成，保留 guard 前原始 completion | 带 case/provenance 的 completions JSONL |
+| `src/mv_audit/analysis/post_dpo_route.py` | 决策门禁 | paired diff、错误归因、reward/schema smoke | 判断残留问题是否适合 RL，输出 READY/NOT_READY 原因 | `rl_decision.json` |
+| `tools/repair_paired_analysis.py` | paired 分析 | baseline/new predictions、GT、errors | 统计 fixed/persistent/introduced，并把错误分为 schema、证据、感知、决策 | attribution JSON/Markdown |
+| `tools/analyze_prompt_guard_errors.py` | guard 分析 | guard 前后 errors | 检查 prompt/schema guard 修复了哪些 case | errors summary |
+| `tools/inspect_both_wrong_cases.py` | case 检查 | 两版本都错的 case | 区分“没识别风险”与“识别后错误放行” | both-wrong attribution |
+| `tools/inspect_order_id_repair_pool.py` | 数据审计 | Train-only repair pool | 检查 order-id 双侧值、图片和 split 边界 | pool audit |
+| `tools/build_repair_sft_v3_order_id_structured_mix.py` | repair converter | order-id repair、low/pass calibration、carryover | 构造 480 条 R3 mix，强化 reason 和双侧 evidence | R3 SFT JSONL + manifest |
+| `tools/check_sft_v3_gate.py` | SFT gate | R2/R3 metrics、errors | 校验 JSON/schema、Audit、HRM、Evidence 和旧 miss 修复数 | gate decision |
+| `tools/model_mined_dpo_v3.py` | DPO v3 数据与审计 | 原始 completions、GT、schema、task reward | 挖 hard pairs、审计 overlap/gap/order-id pair、生成 probe | train/holdout/probe JSONL 与 audit |
+| `tools/make_dpo_v3_inference_config.py` | 配置生成 | checkpoint、基础 YAML、输出目录 | 为不同 checkpoint 生成一致的推理配置 | checkpoint inference YAML |
+| `tools/merge_inference_shards.py` | 并行合并 | GPU0..4 shard JSONL | 按 case id 确定性合并，拒绝重复和缺失 | merged predictions |
+| `tools/compare_dpo_v3_results.py` | full gate | SFT/DPO metrics、errors | 兼容 `issues` 与旧 `issue_codes`，统计 HRM 迁移和 gate | corrected decision JSON |
+| `tools/build_phase10_post_training_report.py` | 报告生成 | 历史 CSV、metrics、errors、训练日志、probe | 分 benchmark 汇总，生成曲线、案例与错误统计 | Phase 10 CSV/JSON/PNG |
+| `tools/build_phase10_diagrams.py` | 图表生成 | 固定项目结构与状态 | 生成后训练架构、模型选择和五卡执行拓扑 | draw.io + PNG |
+| `tools/audit_model_lineage_archive.py` | 归档审计 | lineage manifest、本地 adapter/archive | 校验父级、配置 JSON、权重大小、SHA256、safetensors header | 差集 audit JSON/Markdown |
+
+### Phase 9/10 服务器脚本
+
+| 脚本 | 输入 | 执行动作 | 主要输出 |
+| --- | --- | --- | --- |
+| `scripts/12_run_order_id_repair_sft_v3_server.sh` | R2、480 条 repair mix、五张 GPU | dry-run；获批后 torchrun 五进程 DDP；152 条 shard inference | R3 adapter、metrics、errors、归档 |
+| `scripts/13_run_model_mined_dpo_v3_server.sh` | R3、Train-only candidate pool | R3 gate、240x4 mining、pair audit、weak DPO | weak checkpoints、pairs、probe |
+| `scripts/14_resume_model_mined_dpo_v3_after_sft_gate.sh` | 已完成的 R3 gate | 从中断点恢复 mining/DPO，跳过已验证阶段 | 可恢复 runroot |
+| `scripts/15_run_model_error_mined_dpo_v3_server.sh` | model-error pairs | 运行 weak-v3 训练和 probe | checkpoint-10/20/30/40 |
+| `scripts/16_run_model_error_mined_dpo_v3_strong_server.sh` | weak checkpoint-40 | strong continuation，5 step 保存与 probe | checkpoint-5/10/15/20 |
+| `scripts/17_resume_dpo_v3_strong_full_gate_server.sh` | 选中的 strong checkpoint | 只跑唯一候选的 152-case full gate | predictions、metrics、errors、decision |
+| `scripts/watch_model_mined_dpo_v3_pull_and_shutdown.ps1` | SSH 占位参数、runroot | 轮询终态、拉取结果、校验归档、条件关机 | 本地 remote_artifacts 与 watcher log |
+
+### 最终证据与模型谱系
+
+| 路径 | 内容 |
+| --- | --- |
+| `docs/experiments/phase10_model_error_mined_dpo_v3/` | 分 benchmark 指标、训练曲线、probe、四个案例、错误迁移、模型选择 |
+| `docs/experiments/phase10_model_error_mined_dpo_v3/model_lineage_archive.json` | M2 -> R1 -> R2 -> R3 -> weak-40 -> strong-15 的机器可读父级和哈希 |
+| `docs/experiments/phase10_model_error_mined_dpo_v3/model_lineage_archive_audit.*` | 六级 adapter 的 VERIFIED/差集结果 |
+| `outputs/model_candidates/model_lineage/archives/` | M2/R1/R2/weak-40 minimal adapter tar |
+| `outputs/model_candidates/repair_sft_r3/` | R3 production candidate adapter、日志和归档 |
+| `outputs/remote_artifacts/model_mined_dpo_v3/` | DPO pairs、probe、full gate、strong checkpoint-15 和日志 |
+
+归档中的 minimal adapter 包含推理加载所需的 adapter、processor/tokenizer metadata，不包含 optimizer state 和中间 `checkpoint-*` 目录。是否可复现训练与是否可加载推理必须分开描述。
 
 ## 0. 给非代码读者的总览
 

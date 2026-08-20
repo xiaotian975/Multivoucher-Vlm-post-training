@@ -1,0 +1,36 @@
+{
+    "status":  "NOT_READY_FOR_RL",
+    "rl_recommended":  false,
+    "decision_source":  "prompt_guard_r2_train_decode_dev_error_attribution",
+    "reason":  "Residual high-risk misses are missing_order_id_evidence failures, not recognized_risk_but_decision_released decision errors.",
+    "recommended_next_step":  "ORDER_ID_STRUCTURED_REPAIR_SFT_V3",
+    "metrics":  {
+                    "total_cases":  152,
+                    "json_validity":  1,
+                    "schema_compliance":  1,
+                    "audit_accuracy":  0.96052631578947367,
+                    "high_risk_miss_rate":  0.068965517241379309,
+                    "evidence_support_rate":  0.988527724665392,
+                    "error_cases":  24
+                },
+    "attribution":  {
+                        "bbox_only":  18,
+                        "missing_order_id_evidence":  6,
+                        "recognized_risk_but_decision_released":  0,
+                        "old_order_id_miss_cases":  [
+                                                        "MV_MAIN_025856",
+                                                        "MV_MAIN_003978",
+                                                        "MV_MAIN_019752",
+                                                        "MV_MAIN_016083",
+                                                        "MV_MAIN_030493"
+                                                    ],
+                        "new_order_id_miss_cases":  [
+                                                        "MV_MAIN_016069"
+                                                    ]
+                    },
+    "source_files":  {
+                         "metrics":  "outputs/remote_artifacts/prompt_guard_20260816_manual_pull/metrics.json",
+                         "errors":  "outputs/remote_artifacts/prompt_guard_20260816_manual_pull/errors.jsonl",
+                         "attribution_report":  "outputs/analysis/phase09_order_id_structured_repair_v3/prompt_guard_error_attribution.json"
+                     }
+}

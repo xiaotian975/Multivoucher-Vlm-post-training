@@ -1,0 +1,64 @@
+<mxfile host="app.diagrams.net" agent="Codex" version="24.7.17">
+  <diagram name="Five-GPU execution topology: DDP, model sharding, and task sharding" id="Five-GPU-execution-topology:-DDP,-model-sharding,-and-task-sharding">
+    <mxGraphModel dx="1800" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="900" math="0" shadow="0" defaultFontFamily="Noto Sans JP">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="p1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#546E7A;strokeWidth=2;endArrow=block;fontFamily=Noto Sans JP;fontSize=14;" edge="1" parent="1" source="sft_launch" target="sft_workers">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#546E7A;strokeWidth=2;endArrow=block;fontFamily=Noto Sans JP;fontSize=14;" edge="1" parent="1" source="sft_workers" target="sft_sync">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#546E7A;strokeWidth=2;endArrow=block;fontFamily=Noto Sans JP;fontSize=14;" edge="1" parent="1" source="dpo_launch" target="dpo_shard">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#546E7A;strokeWidth=2;endArrow=block;fontFamily=Noto Sans JP;fontSize=14;" edge="1" parent="1" source="dpo_shard" target="dpo_tradeoff">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#546E7A;strokeWidth=2;endArrow=block;fontFamily=Noto Sans JP;fontSize=14;" edge="1" parent="1" source="infer_launch" target="infer_workers">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#546E7A;strokeWidth=2;endArrow=block;fontFamily=Noto Sans JP;fontSize=14;" edge="1" parent="1" source="infer_workers" target="merge">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#546E7A;strokeWidth=2;endArrow=block;fontFamily=Noto Sans JP;fontSize=14;dashed=1;" edge="1" parent="1" source="dpo_tradeoff" target="probe">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#546E7A;strokeWidth=2;endArrow=block;fontFamily=Noto Sans JP;fontSize=14;dashed=1;" edge="1" parent="1" source="merge" target="probe">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sft_launch" value="SFT v3 launcher&#10;torchrun --nproc_per_node=5" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#E3F2FD;strokeColor=#1565C0;strokeWidth=2;fontColor=#263238;fontFamily=Noto Sans JP;fontSize=16;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="45" y="115" width="255" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="sft_workers" value="5-process DDP&#10;GPU 0..4: full Qwen3-VL + LoRA replica&#10;480 cases / global batch 5 = 96 steps" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;fontColor=#263238;fontFamily=Noto Sans JP;fontSize=16;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="390" y="95" width="450" height="145" as="geometry" />
+        </mxCell>
+        <mxCell id="sft_sync" value="NCCL gradient synchronization&#10;LoRA trainable params: 43.65M&#10;BF16 + gradient checkpointing" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#E0F2F1;strokeColor=#00796B;strokeWidth=2;fontColor=#263238;fontFamily=Noto Sans JP;fontSize=16;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="940" y="105" width="370" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="dpo_launch" value="DPO v2/v3 launcher&#10;one Python process; 5 visible GPUs" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#FFF3E0;strokeColor=#EF6C00;strokeWidth=2;fontColor=#263238;fontFamily=Noto Sans JP;fontSize=16;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="45" y="330" width="255" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="dpo_shard" value="device_map=auto / balanced&#10;Policy + reference layers split over GPU 0..4&#10;Model parallelism, not DDP" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#FCE4EC;strokeColor=#C2185B;strokeWidth=2;fontColor=#263238;fontFamily=Noto Sans JP;fontSize=16;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="390" y="305" width="450" height="145" as="geometry" />
+        </mxCell>
+        <mxCell id="dpo_tradeoff" value="Why: two 8B models exceed one 32GB GPU&#10;Benefit: fits memory&#10;Tradeoff: utilization may be uneven" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;fontColor=#263238;fontFamily=Noto Sans JP;fontSize=16;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="940" y="315" width="370" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="infer_launch" value="Inference / model mining&#10;num_shards=5" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#F3E5F5;strokeColor=#7B1FA2;strokeWidth=2;fontColor=#263238;fontFamily=Noto Sans JP;fontSize=16;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="45" y="555" width="255" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="infer_workers" value="GPU 0..4 independent case shards&#10;Each worker writes one JSONL&#10;240 x 4 rollouts use the same partition" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#EDE7F6;strokeColor=#5E35B1;strokeWidth=2;fontColor=#263238;fontFamily=Noto Sans JP;fontSize=16;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="390" y="530" width="450" height="145" as="geometry" />
+        </mxCell>
+        <mxCell id="merge" value="Deterministic shard merge&#10;case-id completeness + disjointness checks" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#ECEFF1;strokeColor=#455A64;strokeWidth=2;fontColor=#263238;fontFamily=Noto Sans JP;fontSize=16;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="940" y="540" width="370" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="probe" value="Checkpoint-level parallel probe&#10;steps 5/10/15/20&#10;on separate GPUs&#10;selected checkpoint runs full gate" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#FFF8E1;strokeColor=#F9A825;strokeWidth=2;fontColor=#263238;fontFamily=Noto Sans JP;fontSize=16;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="1390" y="515" width="350" height="155" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

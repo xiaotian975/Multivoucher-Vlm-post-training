@@ -1,0 +1,1024 @@
+{
+  "positive_probe_cases": [
+    {
+      "case_id": "MV_MAIN_004522",
+      "kind": "positive_alignment_probe",
+      "ground_truth": {
+        "risk_level": "high",
+        "audit_result": "reject_recommendation",
+        "anomaly_types": [
+          "order_id_mismatch"
+        ],
+        "has_two_sided_order_id_evidence": true,
+        "reason": "检测到order_id_mismatch：订单截图订单号ORD20260106004520与报销申请单订单号ORD20260106004522不一致，建议拒绝报销。",
+        "evidence": [
+          {
+            "source_image_id": "MV_MAIN_004522_order",
+            "source_doc_type": "order",
+            "field": "order_id",
+            "value": "ORD20260106004520",
+            "bbox": [
+              240,
+              259,
+              471,
+              283
+            ],
+            "evidence_text": "订单号：ORD20260106004520"
+          },
+          {
+            "source_image_id": "MV_MAIN_004522_reimbursement_form",
+            "source_doc_type": "reimbursement_form",
+            "field": "order_id",
+            "value": "ORD20260106004522",
+            "bbox": [
+              240,
+              456,
+              471,
+              480
+            ],
+            "evidence_text": "订单号：ORD20260106004522"
+          },
+          {
+            "source_image_id": "MV_MAIN_004522_invoice",
+            "source_doc_type": "invoice",
+            "field": "invoice_amount",
+            "value": "2751.87",
+            "bbox": [
+              102,
+              650,
+              185,
+              674
+            ],
+            "evidence_text": "价税合计2751.87"
+          },
+          {
+            "source_image_id": "MV_MAIN_004522_order",
+            "source_doc_type": "order",
+            "field": "order_amount",
+            "value": "2751.87",
+            "bbox": [
+              102,
+              710,
+              185,
+              734
+            ],
+            "evidence_text": "订单金额2751.87"
+          },
+          {
+            "source_image_id": "MV_MAIN_004522_payment",
+            "source_doc_type": "payment",
+            "field": "payment_amount",
+            "value": "2751.87",
+            "bbox": [
+              102,
+              621,
+              185,
+              646
+            ],
+            "evidence_text": "支付金额2751.87"
+          },
+          {
+            "source_image_id": "MV_MAIN_004522_payment",
+            "source_doc_type": "payment",
+            "field": "payment_id",
+            "value": "PAY20260108004522",
+            "bbox": [
+              240,
+              259,
+              463,
+              283
+            ],
+            "evidence_text": "支付流水号：PAY20260108004522"
+          },
+          {
+            "source_image_id": "MV_MAIN_004522_reimbursement_form",
+            "source_doc_type": "reimbursement_form",
+            "field": "applicant",
+            "value": "李敏",
+            "bbox": [
+              240,
+              256,
+              284,
+              287
+            ],
+            "evidence_text": "申请人：李敏"
+          },
+          {
+            "source_image_id": "MV_MAIN_004522_reimbursement_form",
+            "source_doc_type": "reimbursement_form",
+            "field": "reimbursement_amount",
+            "value": "2751.87",
+            "bbox": [
+              102,
+              710,
+              185,
+              734
+            ],
+            "evidence_text": "报销金额2751.87"
+          }
+        ]
+      },
+      "sft_v3_probe_baseline": {
+        "risk_level": "low",
+        "audit_result": "pass",
+        "anomaly_types": [],
+        "has_two_sided_order_id_evidence": false,
+        "reason": "材料完整且金额、商户、人员、日期与订单号一致，建议通过。",
+        "evidence": [
+          {
+            "source_image_id": "MV_MAIN_004522_invoice",
+            "source_doc_type": "invoice",
+            "field": "invoice_amount",
+            "value": "2751.87",
+            "bbox": [
+              102,
+              650,
+              185,
+              674
+            ],
+            "evidence_text": "价税合计2751.87"
+          },
+          {
+            "source_image_id": "MV_MAIN_004522_order",
+            "source_doc_type": "order",
+            "field": "order_amount",
+            "value": "2751.87",
+            "bbox": [
+              102,
+              710,
+              185,
+              734
+            ],
+            "evidence_text": "订单金额2751.87"
+          },
+          {
+            "source_image_id": "MV_MAIN_004522_payment",
+            "source_doc_type": "payment",
+            "field": "payment_amount",
+            "value": "2751.87",
+            "bbox": [
+              99,
+              621,
+              185,
+              646
+            ],
+            "evidence_text": "支付金额2751.87"
+          },
+          {
+            "source_image_id": "MV_MAIN_004522_payment",
+            "source_doc_type": "payment",
+            "field": "payment_id",
+            "value": "PAY20260108004522",
+            "bbox": [
+              227,
+              259,
+              454,
+              283
+            ],
+            "evidence_text": "支付流水号：PAY20260108004522"
+          },
+          {
+            "source_image_id": "MV_MAIN_004522_reimbursement_form",
+            "source_doc_type": "reimbursement_form",
+            "field": "applicant",
+            "value": "李敏",
+            "bbox": [
+              237,
+              252,
+              287,
+              287
+            ],
+            "evidence_text": "申请人：李敏"
+          },
+          {
+            "source_image_id": "MV_MAIN_004522_reimbursement_form",
+            "source_doc_type": "reimbursement_form",
+            "field": "reimbursement_amount",
+            "value": "2751.87",
+            "bbox": [
+              99,
+              710,
+              185,
+              734
+            ],
+            "evidence_text": "报销金额2751.87"
+          }
+        ]
+      },
+      "dpo_v3_checkpoint15": {
+        "risk_level": "high",
+        "audit_result": "reject_recommendation",
+        "anomaly_types": [
+          "order_id_mismatch"
+        ],
+        "has_two_sided_order_id_evidence": true,
+        "reason": "检测到order_id_mismatch：订单截图订单号ORD20260106004520与报销申请单订单号ORD20260106004522不一致，风险等级为high，审核建议为reject_recommendation。",
+        "evidence": [
+          {
+            "source_image_id": "MV_MAIN_004522_order",
+            "source_doc_type": "order",
+            "field": "order_id",
+            "value": "ORD20260106004520",
+            "bbox": [
+              245,
+              259,
+              471,
+              283
+            ],
+            "evidence_text": "订单号：ORD20260106004520"
+          },
+          {
+            "source_image_id": "MV_MAIN_004522_reimbursement_form",
+            "source_doc_type": "reimbursement_form",
+            "field": "order_id",
+            "value": "ORD20260106004522",
+            "bbox": [
+              245,
+              454,
+              471,
+              478
+            ],
+            "evidence_text": "订单号：ORD20260106004522"
+          },
+          {
+            "source_image_id": "MV_MAIN_004522_invoice",
+            "source_doc_type": "invoice",
+            "field": "invoice_amount",
+            "value": "2751.87",
+            "bbox": [
+              102,
+              650,
+              185,
+              674
+            ],
+            "evidence_text": "价税合计2751.87"
+          },
+          {
+            "source_image_id": "MV_MAIN_004522_order",
+            "source_doc_type": "order",
+            "field": "order_amount",
+            "value": "2751.87",
+            "bbox": [
+              102,
+              710,
+              185,
+              734
+            ],
+            "evidence_text": "订单金额2751.87"
+          },
+          {
+            "source_image_id": "MV_MAIN_004522_payment",
+            "source_doc_type": "payment",
+            "field": "payment_amount",
+            "value": "2751.87",
+            "bbox": [
+              102,
+              621,
+              185,
+              646
+            ],
+            "evidence_text": "支付金额2751.87"
+          },
+          {
+            "source_image_id": "MV_MAIN_004522_payment",
+            "source_doc_type": "payment",
+            "field": "payment_id",
+            "value": "PAY20260108004522",
+            "bbox": [
+              230,
+              259,
+              456,
+              283
+            ],
+            "evidence_text": "支付流水号：PAY20260108004522"
+          },
+          {
+            "source_image_id": "MV_MAIN_004522_reimbursement_form",
+            "source_doc_type": "reimbursement_form",
+            "field": "applicant",
+            "value": "李敏",
+            "bbox": [
+              240,
+              252,
+              287,
+              287
+            ],
+            "evidence_text": "申请人：李敏"
+          },
+          {
+            "source_image_id": "MV_MAIN_004522_reimbursement_form",
+            "source_doc_type": "reimbursement_form",
+            "field": "reimbursement_amount",
+            "value": "2751.87",
+            "bbox": [
+              102,
+              710,
+              185,
+              734
+            ],
+            "evidence_text": "报销金额2751.87"
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "MV_MAIN_020454",
+      "kind": "positive_alignment_probe",
+      "ground_truth": {
+        "risk_level": "high",
+        "audit_result": "reject_recommendation",
+        "anomaly_types": [
+          "order_id_mismatch"
+        ],
+        "has_two_sided_order_id_evidence": true,
+        "reason": "检测到order_id_mismatch：订单截图订单号ORD20260111020451与报销申请单订单号ORD20260111020454不一致，建议拒绝报销。",
+        "evidence": [
+          {
+            "source_image_id": "MV_MAIN_020454_order",
+            "source_doc_type": "order",
+            "field": "order_id",
+            "value": "ORD20260111020451",
+            "bbox": [
+              240,
+              259,
+              471,
+              283
+            ],
+            "evidence_text": "订单号：ORD20260111020451"
+          },
+          {
+            "source_image_id": "MV_MAIN_020454_reimbursement_form",
+            "source_doc_type": "reimbursement_form",
+            "field": "order_id",
+            "value": "ORD20260111020454",
+            "bbox": [
+              240,
+              456,
+              471,
+              480
+            ],
+            "evidence_text": "订单号：ORD20260111020454"
+          },
+          {
+            "source_image_id": "MV_MAIN_020454_invoice",
+            "source_doc_type": "invoice",
+            "field": "invoice_amount",
+            "value": "168.01",
+            "bbox": [
+              102,
+              650,
+              172,
+              674
+            ],
+            "evidence_text": "价税合计168.01"
+          },
+          {
+            "source_image_id": "MV_MAIN_020454_order",
+            "source_doc_type": "order",
+            "field": "order_amount",
+            "value": "168.01",
+            "bbox": [
+              102,
+              710,
+              172,
+              734
+            ],
+            "evidence_text": "订单金额168.01"
+          },
+          {
+            "source_image_id": "MV_MAIN_020454_payment",
+            "source_doc_type": "payment",
+            "field": "payment_amount",
+            "value": "168.01",
+            "bbox": [
+              102,
+              621,
+              172,
+              646
+            ],
+            "evidence_text": "支付金额168.01"
+          },
+          {
+            "source_image_id": "MV_MAIN_020454_payment",
+            "source_doc_type": "payment",
+            "field": "payment_id",
+            "value": "PAY20260114020454",
+            "bbox": [
+              240,
+              259,
+              463,
+              283
+            ],
+            "evidence_text": "支付流水号：PAY20260114020454"
+          },
+          {
+            "source_image_id": "MV_MAIN_020454_reimbursement_form",
+            "source_doc_type": "reimbursement_form",
+            "field": "applicant",
+            "value": "赵华",
+            "bbox": [
+              240,
+              257,
+              284,
+              287
+            ],
+            "evidence_text": "申请人：赵华"
+          },
+          {
+            "source_image_id": "MV_MAIN_020454_reimbursement_form",
+            "source_doc_type": "reimbursement_form",
+            "field": "reimbursement_amount",
+            "value": "168.01",
+            "bbox": [
+              102,
+              710,
+              172,
+              734
+            ],
+            "evidence_text": "报销金额168.01"
+          }
+        ]
+      },
+      "sft_v3_probe_baseline": {
+        "risk_level": "low",
+        "audit_result": "pass",
+        "anomaly_types": [],
+        "has_two_sided_order_id_evidence": false,
+        "reason": "材料完整且金额、商户、人员、日期与订单号一致，建议通过。",
+        "evidence": [
+          {
+            "source_image_id": "MV_MAIN_020454_invoice",
+            "source_doc_type": "invoice",
+            "field": "invoice_amount",
+            "value": "168.01",
+            "bbox": [
+              102,
+              650,
+              168,
+              674
+            ],
+            "evidence_text": "价税合计168.01"
+          },
+          {
+            "source_image_id": "MV_MAIN_020454_order",
+            "source_doc_type": "order",
+            "field": "order_amount",
+            "value": "168.01",
+            "bbox": [
+              102,
+              710,
+              168,
+              734
+            ],
+            "evidence_text": "订单金额168.01"
+          },
+          {
+            "source_image_id": "MV_MAIN_020454_payment",
+            "source_doc_type": "payment",
+            "field": "payment_amount",
+            "value": "168.01",
+            "bbox": [
+              102,
+              621,
+              168,
+              646
+            ],
+            "evidence_text": "支付金额168.01"
+          },
+          {
+            "source_image_id": "MV_MAIN_020454_payment",
+            "source_doc_type": "payment",
+            "field": "payment_id",
+            "value": "PAY20260114020454",
+            "bbox": [
+              231,
+              259,
+              457,
+              283
+            ],
+            "evidence_text": "支付流水号：PAY20260114020454"
+          },
+          {
+            "source_image_id": "MV_MAIN_020454_reimbursement_form",
+            "source_doc_type": "reimbursement_form",
+            "field": "applicant",
+            "value": "赵华",
+            "bbox": [
+              237,
+              257,
+              278,
+              287
+            ],
+            "evidence_text": "申请人：赵华"
+          },
+          {
+            "source_image_id": "MV_MAIN_020454_reimbursement_form",
+            "source_doc_type": "reimbursement_form",
+            "field": "reimbursement_amount",
+            "value": "168.01",
+            "bbox": [
+              102,
+              710,
+              168,
+              734
+            ],
+            "evidence_text": "报销金额168.01"
+          }
+        ]
+      },
+      "dpo_v3_checkpoint15": {
+        "risk_level": "high",
+        "audit_result": "reject_recommendation",
+        "anomaly_types": [
+          "order_id_mismatch"
+        ],
+        "has_two_sided_order_id_evidence": true,
+        "reason": "检测到order_id_mismatch：订单截图订单号ORD20260111020451与报销申请单订单号ORD20260111020454不一致，风险等级为high，审核建议为reject_recommendation。",
+        "evidence": [
+          {
+            "source_image_id": "MV_MAIN_020454_order",
+            "source_doc_type": "order",
+            "field": "order_id",
+            "value": "ORD20260111020451",
+            "bbox": [
+              240,
+              259,
+              463,
+              283
+            ],
+            "evidence_text": "订单号：ORD20260111020451"
+          },
+          {
+            "source_image_id": "MV_MAIN_020454_reimbursement_form",
+            "source_doc_type": "reimbursement_form",
+            "field": "order_id",
+            "value": "ORD20260111020454",
+            "bbox": [
+              240,
+              454,
+              463,
+              478
+            ],
+            "evidence_text": "订单号：ORD20260111020454"
+          },
+          {
+            "source_image_id": "MV_MAIN_020454_invoice",
+            "source_doc_type": "invoice",
+            "field": "invoice_amount",
+            "value": "168.01",
+            "bbox": [
+              102,
+              650,
+              168,
+              674
+            ],
+            "evidence_text": "价税合计168.01"
+          },
+          {
+            "source_image_id": "MV_MAIN_020454_order",
+            "source_doc_type": "order",
+            "field": "order_amount",
+            "value": "168.01",
+            "bbox": [
+              102,
+              710,
+              168,
+              734
+            ],
+            "evidence_text": "订单金额168.01"
+          },
+          {
+            "source_image_id": "MV_MAIN_020454_payment",
+            "source_doc_type": "payment",
+            "field": "payment_amount",
+            "value": "168.01",
+            "bbox": [
+              102,
+              621,
+              168,
+              646
+            ],
+            "evidence_text": "支付金额168.01"
+          },
+          {
+            "source_image_id": "MV_MAIN_020454_payment",
+            "source_doc_type": "payment",
+            "field": "payment_id",
+            "value": "PAY20260114020454",
+            "bbox": [
+              231,
+              259,
+              457,
+              283
+            ],
+            "evidence_text": "支付流水号：PAY20260114020454"
+          },
+          {
+            "source_image_id": "MV_MAIN_020454_reimbursement_form",
+            "source_doc_type": "reimbursement_form",
+            "field": "applicant",
+            "value": "赵华",
+            "bbox": [
+              231,
+              257,
+              278,
+              287
+            ],
+            "evidence_text": "申请人：赵华"
+          },
+          {
+            "source_image_id": "MV_MAIN_020454_reimbursement_form",
+            "source_doc_type": "reimbursement_form",
+            "field": "reimbursement_amount",
+            "value": "168.01",
+            "bbox": [
+              102,
+              710,
+              168,
+              734
+            ],
+            "evidence_text": "报销金额168.01"
+          }
+        ]
+      }
+    }
+  ],
+  "overfit_full_gate_cases": [
+    {
+      "case_id": "MV_MAIN_023069",
+      "kind": "full_gate_overfit",
+      "sft_v3_baseline": {
+        "evaluator_error_recorded": false
+      },
+      "ground_truth": {
+        "risk_level": "high",
+        "audit_result": "reject_recommendation",
+        "anomaly_types": [
+          "amount_mismatch"
+        ],
+        "has_two_sided_order_id_evidence": false,
+        "reason": "检测到amount_mismatch，风险等级为high，审核建议为reject_recommendation。",
+        "evidence": [
+          {
+            "source_image_id": "MV_MAIN_023069_invoice",
+            "source_doc_type": "invoice",
+            "field": "invoice_amount",
+            "value": "1160.98",
+            "bbox": [
+              102,
+              650,
+              185,
+              674
+            ],
+            "evidence_text": "价税合计1160.98"
+          },
+          {
+            "source_image_id": "MV_MAIN_023069_order",
+            "source_doc_type": "order",
+            "field": "order_amount",
+            "value": "1310.98",
+            "bbox": [
+              102,
+              710,
+              185,
+              734
+            ],
+            "evidence_text": "订单金额1310.98"
+          },
+          {
+            "source_image_id": "MV_MAIN_023069_payment",
+            "source_doc_type": "payment",
+            "field": "payment_amount",
+            "value": "1160.98",
+            "bbox": [
+              102,
+              621,
+              185,
+              646
+            ],
+            "evidence_text": "支付金额1160.98"
+          },
+          {
+            "source_image_id": "MV_MAIN_023069_payment",
+            "source_doc_type": "payment",
+            "field": "payment_id",
+            "value": "PAY20260410023069",
+            "bbox": [
+              240,
+              259,
+              463,
+              283
+            ],
+            "evidence_text": "支付流水号：PAY20260410023069"
+          },
+          {
+            "source_image_id": "MV_MAIN_023069_reimbursement_form",
+            "source_doc_type": "reimbursement_form",
+            "field": "applicant",
+            "value": "孙超",
+            "bbox": [
+              240,
+              257,
+              284,
+              287
+            ],
+            "evidence_text": "申请人：孙超"
+          },
+          {
+            "source_image_id": "MV_MAIN_023069_reimbursement_form",
+            "source_doc_type": "reimbursement_form",
+            "field": "reimbursement_amount",
+            "value": "1160.98",
+            "bbox": [
+              102,
+              710,
+              185,
+              734
+            ],
+            "evidence_text": "报销金额1160.98"
+          }
+        ]
+      },
+      "dpo_v3_checkpoint15": {
+        "risk_level": "high",
+        "audit_result": "manual_review",
+        "anomaly_types": [
+          "amount_mismatch"
+        ],
+        "has_two_sided_order_id_evidence": false,
+        "reason": "检测到amount_mismatch，风险等级为high，审核建议为manual_review。",
+        "evidence": [
+          {
+            "source_image_id": "MV_MAIN_023069_invoice",
+            "source_doc_type": "invoice",
+            "field": "invoice_amount",
+            "value": "1160.98",
+            "bbox": [
+              102,
+              650,
+              172,
+              674
+            ],
+            "evidence_text": "价税合计1160.98"
+          },
+          {
+            "source_image_id": "MV_MAIN_023069_order",
+            "source_doc_type": "order",
+            "field": "order_amount",
+            "value": "1310.98",
+            "bbox": [
+              102,
+              710,
+              185,
+              734
+            ],
+            "evidence_text": "订单金额1310.98"
+          },
+          {
+            "source_image_id": "MV_MAIN_023069_payment",
+            "source_doc_type": "payment",
+            "field": "payment_amount",
+            "value": "1160.98",
+            "bbox": [
+              99,
+              621,
+              172,
+              646
+            ],
+            "evidence_text": "支付金额1160.98"
+          },
+          {
+            "source_image_id": "MV_MAIN_023069_payment",
+            "source_doc_type": "payment",
+            "field": "payment_id",
+            "value": "PAY20260410023069",
+            "bbox": [
+              220,
+              259,
+              450,
+              283
+            ],
+            "evidence_text": "支付流水号：PAY20260410023069"
+          },
+          {
+            "source_image_id": "MV_MAIN_023069_reimbursement_form",
+            "source_doc_type": "reimbursement_form",
+            "field": "applicant",
+            "value": "孙超",
+            "bbox": [
+              229,
+              257,
+              277,
+              287
+            ],
+            "evidence_text": "申请人：孙超"
+          },
+          {
+            "source_image_id": "MV_MAIN_023069_reimbursement_form",
+            "source_doc_type": "reimbursement_form",
+            "field": "reimbursement_amount",
+            "value": "1160.98",
+            "bbox": [
+              99,
+              710,
+              172,
+              734
+            ],
+            "evidence_text": "报销金额1160.98"
+          }
+        ]
+      },
+      "dpo_v3_issues": [
+        "audit_mismatch"
+      ]
+    },
+    {
+      "case_id": "MV_MAIN_015818",
+      "kind": "full_gate_overfit",
+      "sft_v3_baseline": {
+        "evaluator_error_recorded": false
+      },
+      "ground_truth": {
+        "risk_level": "high",
+        "audit_result": "reject_recommendation",
+        "anomaly_types": [
+          "amount_mismatch"
+        ],
+        "has_two_sided_order_id_evidence": false,
+        "reason": "检测到amount_mismatch，风险等级为high，审核建议为reject_recommendation。",
+        "evidence": [
+          {
+            "source_image_id": "MV_MAIN_015818_invoice",
+            "source_doc_type": "invoice",
+            "field": "invoice_amount",
+            "value": "4220.76",
+            "bbox": [
+              102,
+              650,
+              185,
+              674
+            ],
+            "evidence_text": "价税合计4220.76"
+          },
+          {
+            "source_image_id": "MV_MAIN_015818_order",
+            "source_doc_type": "order",
+            "field": "order_amount",
+            "value": "4727.25",
+            "bbox": [
+              102,
+              710,
+              185,
+              734
+            ],
+            "evidence_text": "订单金额4727.25"
+          },
+          {
+            "source_image_id": "MV_MAIN_015818_payment",
+            "source_doc_type": "payment",
+            "field": "payment_amount",
+            "value": "4220.76",
+            "bbox": [
+              102,
+              621,
+              185,
+              646
+            ],
+            "evidence_text": "支付金额4220.76"
+          },
+          {
+            "source_image_id": "MV_MAIN_015818_payment",
+            "source_doc_type": "payment",
+            "field": "payment_id",
+            "value": "PAY20260321015818",
+            "bbox": [
+              240,
+              259,
+              463,
+              283
+            ],
+            "evidence_text": "支付流水号：PAY20260321015818"
+          },
+          {
+            "source_image_id": "MV_MAIN_015818_reimbursement_form",
+            "source_doc_type": "reimbursement_form",
+            "field": "applicant",
+            "value": "周强",
+            "bbox": [
+              240,
+              259,
+              284,
+              287
+            ],
+            "evidence_text": "申请人：周强"
+          },
+          {
+            "source_image_id": "MV_MAIN_015818_reimbursement_form",
+            "source_doc_type": "reimbursement_form",
+            "field": "reimbursement_amount",
+            "value": "4220.76",
+            "bbox": [
+              102,
+              710,
+              185,
+              734
+            ],
+            "evidence_text": "报销金额4220.76"
+          }
+        ]
+      },
+      "dpo_v3_checkpoint15": {
+        "risk_level": "high",
+        "audit_result": "manual_review",
+        "anomaly_types": [
+          "amount_mismatch"
+        ],
+        "has_two_sided_order_id_evidence": false,
+        "reason": "检测到amount_mismatch，风险等级为high，审核建议为manual_review。",
+        "evidence": [
+          {
+            "source_image_id": "MV_MAIN_015818_invoice",
+            "source_doc_type": "invoice",
+            "field": "invoice_amount",
+            "value": "4220.76",
+            "bbox": [
+              99,
+              650,
+              172,
+              674
+            ],
+            "evidence_text": "价税合计4220.76"
+          },
+          {
+            "source_image_id": "MV_MAIN_015818_order",
+            "source_doc_type": "order",
+            "field": "order_amount",
+            "value": "4727.25",
+            "bbox": [
+              102,
+              710,
+              185,
+              734
+            ],
+            "evidence_text": "订单金额4727.25"
+          },
+          {
+            "source_image_id": "MV_MAIN_015818_payment",
+            "source_doc_type": "payment",
+            "field": "payment_amount",
+            "value": "4220.76",
+            "bbox": [
+              99,
+              621,
+              172,
+              646
+            ],
+            "evidence_text": "支付金额4220.76"
+          },
+          {
+            "source_image_id": "MV_MAIN_015818_payment",
+            "source_doc_type": "payment",
+            "field": "payment_id",
+            "value": "PAY20260321015818",
+            "bbox": [
+              230,
+              259,
+              457,
+              283
+            ],
+            "evidence_text": "支付流水号：PAY20260321015818"
+          },
+          {
+            "source_image_id": "MV_MAIN_015818_reimbursement_form",
+            "source_doc_type": "reimbursement_form",
+            "field": "applicant",
+            "value": "周强",
+            "bbox": [
+              230,
+              259,
+              270,
+              287
+            ],
+            "evidence_text": "申请人：周强"
+          },
+          {
+            "source_image_id": "MV_MAIN_015818_reimbursement_form",
+            "source_doc_type": "reimbursement_form",
+            "field": "reimbursement_amount",
+            "value": "4220.76",
+            "bbox": [
+              99,
+              710,
+              172,
+              734
+            ],
+            "evidence_text": "报销金额4220.76"
+          }
+        ]
+      },
+      "dpo_v3_issues": [
+        "audit_mismatch"
+      ]
+    }
+  ]
+}

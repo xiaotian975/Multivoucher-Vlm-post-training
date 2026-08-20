@@ -1,0 +1,61 @@
+<mxfile host="app.diagrams.net" agent="Codex" version="24.7.17">
+  <diagram name="Model selection and release gate" id="Model-selection-and-release-gate">
+    <mxGraphModel dx="1600" dy="850" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="850" math="0" shadow="0" defaultFontFamily="Noto Sans JP">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="s1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#546E7A;strokeWidth=2;endArrow=block;fontFamily=Noto Sans JP;fontSize=14;" edge="1" parent="1" source="sft_input" target="contract">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="s2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#546E7A;strokeWidth=2;endArrow=block;fontFamily=Noto Sans JP;fontSize=14;" edge="1" parent="1" source="dpo_input" target="evidence">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="s3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#546E7A;strokeWidth=2;endArrow=block;fontFamily=Noto Sans JP;fontSize=14;" edge="1" parent="1" source="contract" target="business">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="s4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#546E7A;strokeWidth=2;endArrow=block;fontFamily=Noto Sans JP;fontSize=14;" edge="1" parent="1" source="evidence" target="attribution">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="s5" value="passes dev gate" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2E7D32;strokeWidth=2;endArrow=block;fontFamily=Noto Sans JP;fontSize=14;" edge="1" parent="1" source="business" target="production">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="s6" value="full gate not met" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#C62828;strokeWidth=2;endArrow=block;fontFamily=Noto Sans JP;fontSize=14;" edge="1" parent="1" source="attribution" target="research">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="s7" value="before deployment" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#546E7A;strokeWidth=2;endArrow=block;fontFamily=Noto Sans JP;fontSize=14;dashed=1;" edge="1" parent="1" source="production" target="holdout">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="s8" value="research only" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#546E7A;strokeWidth=2;endArrow=block;fontFamily=Noto Sans JP;fontSize=14;dashed=1;" edge="1" parent="1" source="research" target="holdout">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sft_input" value="SFT v3&#10;Audit 96.71% | HRM 5.75%&#10;JSON/schema 100%" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;fontColor=#263238;fontFamily=Noto Sans JP;fontSize=16;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="80" y="125" width="330" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="dpo_input" value="DPO v3 checkpoint-15&#10;probe reward +0.167&#10;pair rate +11.1pp" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#FFF3E0;strokeColor=#EF6C00;strokeWidth=2;fontColor=#263238;fontFamily=Noto Sans JP;fontSize=16;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="1190" y="125" width="330" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="contract" value="Contract gate&#10;JSON validity + schema compliance" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#E3F2FD;strokeColor=#1565C0;strokeWidth=2;fontColor=#263238;fontFamily=Noto Sans JP;fontSize=16;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="475" y="125" width="270" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="evidence" value="Evidence gate&#10;support + hallucination + bbox" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#F3E5F5;strokeColor=#7B1FA2;strokeWidth=2;fontColor=#263238;fontFamily=Noto Sans JP;fontSize=16;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="855" y="125" width="270" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="business" value="Business gate&#10;Audit accuracy + High-risk Miss" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;fontColor=#263238;fontFamily=Noto Sans JP;fontSize=16;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="470" y="365" width="285" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="attribution" value="Paired attribution&#10;5 old HRM retained + 7 introduced&#10;14 reject -&amp;gt; manual_review" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#ECEFF1;strokeColor=#455A64;strokeWidth=2;fontColor=#263238;fontFamily=Noto Sans JP;fontSize=16;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="850" y="355" width="300" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="production" value="repair_sft_r3&#10;PRODUCTION_CANDIDATE&#10;NOT_DEPLOYED" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#C8E6C9;strokeColor=#1B5E20;strokeWidth=2;fontColor=#263238;fontFamily=Noto Sans JP;fontSize=16;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="245" y="620" width="350" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="research" value="DPO checkpoint-15&#10;ALIGNMENT_RESEARCH_CANDIDATE&#10;deployment_eligible=false" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#FFE0B2;strokeColor=#E65100;strokeWidth=2;fontColor=#263238;fontFamily=Noto Sans JP;fontSize=16;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="1005" y="620" width="380" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="holdout" value="Final holdout not run&#10;No production deployment claim" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#FAFAFA;strokeColor=#616161;strokeWidth=2;fontColor=#263238;fontFamily=Noto Sans JP;fontSize=16;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="625" y="670" width="315" height="105" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

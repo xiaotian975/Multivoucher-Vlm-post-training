@@ -1,0 +1,23 @@
+{
+  "name": "phase09_repair_sft_v3_order_id_structured_mix",
+  "seed": 44,
+  "carryover_source": "docs/experiments/phase08_high_risk_repair_pack_20260813/repair_sft_train_mix.jsonl",
+  "carryover_rows": 240,
+  "carryover_limit": 240,
+  "carryover_dropped_before_limit": 0,
+  "order_id_structured_repair_rows": 120,
+  "order_id_candidates_available": 2011,
+  "order_id_candidates_missing_pair": 0,
+  "calibration_rows": 120,
+  "calibration_bucket_counts": {
+    "low_pass": 80,
+    "medium_or_manual_review": 40
+  },
+  "total_rows": 480,
+  "excluded_case_count": 8162,
+  "overlap_with_excluded_count": 0,
+  "source_policy": "MV-Train only; excludes DPO holdout, train_decode_dev and sample500/Test raw cases.",
+  "target_policy": "Public output schema unchanged; order_id mismatch answers put order/reimbursement order_id evidence first and use explicit A-vs-B reason.",
+  "output_train": "docs/experiments/phase09_order_id_structured_repair_v3/repair_sft_v3_order_id_structured_mix.jsonl",
+  "output_config": "configs/train/high_risk_repair_sft_v3_order_id_structured_from_r2_qwen3vl_8b_server.yaml"
+}

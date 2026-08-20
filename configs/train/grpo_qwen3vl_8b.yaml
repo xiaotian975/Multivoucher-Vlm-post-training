@@ -21,14 +21,20 @@ training:
   per_device_train_batch_size: 1
   gradient_accumulation_steps: 16
   gradient_checkpointing: true
-  num_generations: 2
+  num_generations: 4
   max_completion_length: 512
   temperature: 0.7
   top_p: 0.9
-  kl_beta: 0.02
-  scale_rewards: true
+  kl_beta: 0.0
+  scale_rewards: false
   bf16: true
   logging_steps: 10
   save_steps: 500
   save_total_limit: 2
   report_to: []
+
+route_guard:
+  decision_file: docs/experiments/phase09_repair_v4/rl_decision.json
+  required_status: READY_FOR_RL
+  require_allow_rl: true
+  first_formal_stage: compatibility_smoke

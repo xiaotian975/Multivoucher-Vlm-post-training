@@ -17,10 +17,22 @@ from mv_audit.inference.qwen3vl_common import (
     move_inputs_to_model,
     process_messages,
 )
-from mv_audit.utils import ensure_dir, iter_jsonl, load_config, read_jsonl, write_jsonl
+from mv_audit.inference.schema_guard import guard_raw_output
+from mv_audit.utils import ensure_dir, iter_jsonl, load_config, read_jsonl, read_yaml, write_jsonl
 
 
-MODEL_IDS = {"m0_zero_shot", "m1_few_shot", "m2_sft", "m3_dpo", "m3v2_dpo", "repair_sft_r1"}
+MODEL_IDS = {
+    "m0_zero_shot",
+    "m1_few_shot",
+    "m2_sft",
+    "m3_dpo",
+    "m3v2_dpo",
+    "repair_sft_r1",
+    "repair_sft_r2",
+    "repair_sft_r3",
+    "dpo_v3_model_mined",
+    "dpo_v3_model_mined_strong",
+}
 TEST_SPLITS = {"test_clean", "test_robust", "test_unseen_template", "test_hard_negative", "train_decode_dev"}
 DEFAULT_CONFIG = "configs/train/sft_lora_qwen3vl_8b.yaml"
 
@@ -192,18 +204,37 @@ def _messages_for_row(row: dict[str, Any], inference_config: dict[str, Any]) -> 
     return [{"role": "user", "content": content}]
 
 
-def _prediction_path(config: dict[str, Any], *, model_id: str, split: str) -> Path:
+def _sharded_file_name(split: str, *, shard_index: int | None, num_shards: int | None) -> str:
+    if shard_index is None or num_shards is None:
+        return f"{split}.jsonl"
+    return f"{split}.shard-{shard_index:05d}-of-{num_shards:05d}.jsonl"
+
+
+def _prediction_path(
+    config: dict[str, Any],
+    *,
+    model_id: str,
+    split: str,
+    shard_index: int | None = None,
+    num_shards: int | None = None,
+) -> Path:
     output_dir = Path(str(_section(config, "inference").get("predictions_dir", "outputs/predictions")))
-    return output_dir / model_id / f"{split}.jsonl"
+    return output_dir / model_id / _sharded_file_name(split, shard_index=shard_index, num_shards=num_shards)
 
 
-def _ground_truth_path(config: dict[str, Any], *, split: str) -> Path:
+def _ground_truth_path(
+    config: dict[str, Any],
+    *,
+    split: str,
+    shard_index: int | None = None,
+    num_shards: int | None = None,
+) -> Path:
     inference_config = _section(config, "inference")
     if split == "train_decode_dev" and inference_config.get("train_decode_dev_ground_truth_dir"):
         output_dir = Path(str(inference_config["train_decode_dev_ground_truth_dir"]))
     else:
         output_dir = Path(str(inference_config.get("ground_truth_dir", "data/mv_audit/eval_sets_main")))
-    return output_dir / f"{split}.jsonl"
+    return output_dir / _sharded_file_name(split, shard_index=shard_index, num_shards=num_shards)
 
 
 def _ordered_predictions(
@@ -224,8 +255,32 @@ def _existing_predictions(path: Path) -> dict[str, dict[str, Any]]:
     return predictions
 
 
-def _dry_run(config: dict[str, Any], *, model_id: str, split: str, limit: int | None) -> None:
+def _select_shard(
+    rows: list[dict[str, Any]],
+    *,
+    shard_index: int | None,
+    num_shards: int | None,
+) -> list[dict[str, Any]]:
+    if shard_index is None and num_shards is None:
+        return rows
+    if shard_index is None or num_shards is None:
+        raise ValueError("shard_index and num_shards must be provided together.")
+    if num_shards <= 0 or shard_index < 0 or shard_index >= num_shards:
+        raise ValueError(f"Invalid shard {shard_index}/{num_shards}.")
+    return [row for index, row in enumerate(rows) if index % num_shards == shard_index]
+
+
+def _dry_run(
+    config: dict[str, Any],
+    *,
+    model_id: str,
+    split: str,
+    limit: int | None,
+    shard_index: int | None,
+    num_shards: int | None,
+) -> None:
     rows = build_eval_rows(config=config, split=split, model_id=model_id, limit=limit)
+    rows = _select_shard(rows, shard_index=shard_index, num_shards=num_shards)
     if not rows:
         raise ValueError(f"No rows built for split {split}.")
     for row in rows[: min(len(rows), 2)]:
@@ -239,8 +294,8 @@ def _dry_run(config: dict[str, Any], *, model_id: str, split: str, limit: int | 
     print(f"model_id={model_id}")
     print(f"split={split}")
     print(f"rows_checked={len(rows)}")
-    print(f"prediction_output={_prediction_path(config, model_id=model_id, split=split)}")
-    print(f"ground_truth_output={_ground_truth_path(config, split=split)}")
+    print(f"prediction_output={_prediction_path(config, model_id=model_id, split=split, shard_index=shard_index, num_shards=num_shards)}")
+    print(f"ground_truth_output={_ground_truth_path(config, split=split, shard_index=shard_index, num_shards=num_shards)}")
 
 
 def _load_model_for_inference(config: dict[str, Any], *, model_id: str):
@@ -249,6 +304,10 @@ def _load_model_for_inference(config: dict[str, Any], *, model_id: str):
     adapter_key_by_model = {
         "m2_sft": "sft_adapter_dir",
         "repair_sft_r1": "sft_adapter_dir",
+        "repair_sft_r2": "sft_adapter_dir",
+        "repair_sft_r3": "sft_adapter_dir",
+        "dpo_v3_model_mined": "dpo_adapter_dir",
+        "dpo_v3_model_mined_strong": "dpo_adapter_dir",
         "m3_dpo": "dpo_adapter_dir",
         "m3v2_dpo": "dpo_adapter_dir",
     }
@@ -265,13 +324,45 @@ def _load_model_for_inference(config: dict[str, Any], *, model_id: str):
         model.eval()
     return model, processor, model_path
 
+def _schema_guard_schema(config: dict[str, Any]) -> dict[str, Any] | None:
+    inference_config = _section(config, "inference")
+    if not inference_config.get("schema_guard", False):
+        return None
+    data_config = _section(config, "data")
+    schema_path = (
+        inference_config.get("output_schema")
+        or data_config.get("output_schema")
+        or "configs/schema/output_schema.json"
+    )
+    return read_yaml(schema_path)
 
-def run_inference(config: dict[str, Any], *, model_id: str, split: str, limit: int | None, resume: bool) -> None:
+def run_inference(
+    config: dict[str, Any],
+    *,
+    model_id: str,
+    split: str,
+    limit: int | None,
+    resume: bool,
+    shard_index: int | None = None,
+    num_shards: int | None = None,
+) -> None:
     if model_id not in MODEL_IDS:
         raise ValueError(f"Unsupported model_id {model_id!r}. Expected one of {sorted(MODEL_IDS)}.")
     rows = build_eval_rows(config=config, split=split, model_id=model_id, limit=limit)
-    prediction_path = _prediction_path(config, model_id=model_id, split=split)
-    ground_truth_path = _ground_truth_path(config, split=split)
+    rows = _select_shard(rows, shard_index=shard_index, num_shards=num_shards)
+    prediction_path = _prediction_path(
+        config,
+        model_id=model_id,
+        split=split,
+        shard_index=shard_index,
+        num_shards=num_shards,
+    )
+    ground_truth_path = _ground_truth_path(
+        config,
+        split=split,
+        shard_index=shard_index,
+        num_shards=num_shards,
+    )
     ensure_dir(prediction_path.parent)
     ensure_dir(ground_truth_path.parent)
     write_jsonl(rows, ground_truth_path)
@@ -288,6 +379,7 @@ def run_inference(config: dict[str, Any], *, model_id: str, split: str, limit: i
 
     model, processor, model_path = _load_model_for_inference(config, model_id=model_id)
     inference_config = _section(config, "inference")
+    schema_guard_schema = _schema_guard_schema(config)
     new_predictions = 0
     total_rows = len(rows)
     skipped_existing = len(rows) - len(pending_rows)
@@ -305,7 +397,7 @@ def run_inference(config: dict[str, Any], *, model_id: str, split: str, limit: i
             temperature=float(inference_config.get("temperature", 0.0)),
             top_p=float(inference_config.get("top_p", 0.9)),
         )
-        predictions_by_case[row["case_id"]] = {
+        prediction_row = {
             "case_id": row["case_id"],
             "model_id": model_id,
             "split": split,
@@ -314,6 +406,13 @@ def run_inference(config: dict[str, Any], *, model_id: str, split: str, limit: i
             "elapsed_seconds": time.perf_counter() - started,
             "model_path": model_path,
         }
+        if schema_guard_schema is not None:
+            guarded_output, guard_meta = guard_raw_output(raw_output, schema_guard_schema)
+            if guard_meta.get("changed"):
+                prediction_row["raw_output_original"] = raw_output
+                prediction_row["raw_output"] = guarded_output
+            prediction_row["schema_guard"] = guard_meta
+        predictions_by_case[row["case_id"]] = prediction_row
         new_predictions += 1
         completed = skipped_existing + new_predictions
         print(
@@ -348,6 +447,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--split", required=True, choices=sorted(TEST_SPLITS))
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--shard_index", type=int, default=None)
+    parser.add_argument("--num_shards", type=int, default=None)
     parser.add_argument("--dry_run", action="store_true")
     return parser.parse_args()
 
@@ -356,9 +457,24 @@ def main() -> None:
     args = parse_args()
     config = load_config(args.config)
     if args.dry_run:
-        _dry_run(config, model_id=args.model_id, split=args.split, limit=args.limit)
+        _dry_run(
+            config,
+            model_id=args.model_id,
+            split=args.split,
+            limit=args.limit,
+            shard_index=args.shard_index,
+            num_shards=args.num_shards,
+        )
         return
-    run_inference(config, model_id=args.model_id, split=args.split, limit=args.limit, resume=args.resume)
+    run_inference(
+        config,
+        model_id=args.model_id,
+        split=args.split,
+        limit=args.limit,
+        resume=args.resume,
+        shard_index=args.shard_index,
+        num_shards=args.num_shards,
+    )
 
 
 if __name__ == "__main__":

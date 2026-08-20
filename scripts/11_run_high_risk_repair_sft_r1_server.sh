@@ -63,6 +63,11 @@ log "sft_dry_run_start"
 DRY_RUN=1 MAX_SAMPLES=4 CONFIG="$CONFIG" bash scripts/04_train_sft.sh > "$LOG_DIR/sft_dry_run.log" 2>&1
 log "sft_dry_run_done"
 
+if [[ "${ALLOW_TRAINING:-0}" != "1" ]]; then
+  log "training_blocked missing ALLOW_TRAINING=1; dry-run completed only"
+  exit 22
+fi
+
 log "train_start model_id=$MODEL_ID"
 if [[ -n "$TRAIN_MAX_SAMPLES" ]]; then
   MAX_SAMPLES="$TRAIN_MAX_SAMPLES" CONFIG="$CONFIG" bash scripts/04_train_sft.sh > "$LOG_DIR/train.log" 2>&1

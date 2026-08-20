@@ -1,0 +1,53 @@
+seed: 45
+
+model:
+  model_name_or_path: Qwen/Qwen3-VL-8B-Instruct
+  local_model_dir: models/Qwen3-VL-8B-Instruct
+  sft_checkpoint_dir: outputs/checkpoints/sft/qwen3vl_8b_high_risk_repair_r3_order_id_structured_from_r2
+  policy_checkpoint_dir: outputs/checkpoints/dpo/qwen3vl_8b_dpo_v3_model_mined_from_repair_r3/checkpoint-40
+  dtype: auto
+  device_map: balanced
+  trust_remote_code: true
+
+data:
+  train_file: data/mv_audit/dpo_v3_model_mined/pairs_train.jsonl
+  holdout_file: data/mv_audit/dpo_v3_model_mined/pairs_holdout.jsonl
+  decode_dev_file: docs/experiments/phase08_loss_ablation_two_candidate_decode_20260812_5gpu_ablation_r3/ground_truth/dpo_v2_baseline/train_decode_dev.jsonl
+  output_schema: configs/schema/output_schema.json
+  require_existing_images: true
+  train_only: true
+
+training:
+  output_dir: outputs/checkpoints/dpo/qwen3vl_8b_dpo_v3_model_mined_strong_from_weak_step40
+  metrics_output: outputs/eval_reports/phase10_dpo_v3_model_mined/dpo_v3_strong_reward_audit.json
+  learning_rate: 5.0e-6
+  num_train_epochs: 1
+  max_train_steps: 20
+  per_device_train_batch_size: 1
+  gradient_accumulation_steps: 4
+  gradient_checkpointing: true
+  loss_type: dpo
+  logprob_normalization: mean_token
+  beta: 1.0
+  lambda_sft: 0.2
+  max_weight: 2.0
+  bf16: true
+  logging_steps: 5
+  eval_steps: 5
+  max_holdout_examples: 8
+  save_steps: 5
+  save_total_limit: 4
+  report_to: []
+
+inference:
+  predictions_dir: outputs/predictions/phase10_dpo_v3_model_mined_train_decode_dev
+  ground_truth_dir: outputs/eval_sets/phase10_dpo_v3_model_mined_train_decode_dev
+  train_decode_dev_file: docs/experiments/phase08_loss_ablation_two_candidate_decode_20260812_5gpu_ablation_r3/ground_truth/dpo_v2_baseline/train_decode_dev.jsonl
+  train_decode_dev_ground_truth_dir: outputs/eval_sets/phase10_dpo_v3_model_mined_train_decode_dev
+  dpo_adapter_dir: outputs/checkpoints/dpo/qwen3vl_8b_dpo_v3_model_mined_from_repair_r3
+  max_new_tokens: 1536
+  temperature: 0.0
+  top_p: 0.9
+  image_max_pixels: 262144
+  flush_every: 1
+  schema_guard: true

@@ -1,0 +1,19 @@
+{
+  "stage": "model_mined_dpo_v3_candidates",
+  "seed": 45,
+  "counts": {
+    "other_high_risk": 60,
+    "low_pass": 60,
+    "order_id_mismatch": 120
+  },
+  "available": {
+    "order_id_mismatch": 1891,
+    "other_high_risk": 9282,
+    "low_pass": 8955
+  },
+  "total": 240,
+  "excluded_case_count": 8642,
+  "overlap_with_excluded": 0,
+  "source_policy": "MV-Train only; excludes v3 mix, DPO holdout/decode-dev and all Test/sample500 cases.",
+  "output": "data/mv_audit/dpo_v3_model_mined/candidates.jsonl"
+}

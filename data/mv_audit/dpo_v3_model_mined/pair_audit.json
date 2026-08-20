@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "train_pairs": 120,
+  "holdout_pairs": 24,
+  "train_holdout_overlap": 0,
+  "schema_valid_pairs": 144,
+  "positive_task_reward_gap_rate": 1.0,
+  "train_bucket_counts": {
+    "low_pass": 52,
+    "order_id_mismatch": 68
+  },
+  "holdout_bucket_counts": {
+    "order_id_mismatch": 18,
+    "low_pass": 6
+  },
+  "chosen_source_counts": {
+    "model_generated": 66,
+    "expert_corrected_target": 78
+  },
+  "rejected_source_counts": {
+    "synthetic_false_escalation_calibration": 58,
+    "model_generated": 86
+  },
+  "preference_gap_min": 0.15937499999999982,
+  "preference_gap_max": 0.6
+}

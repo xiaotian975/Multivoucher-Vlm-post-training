@@ -1,0 +1,61 @@
+<mxfile host="app.diagrams.net" agent="Codex" version="24.7.17">
+  <diagram name="MultiVoucher-Audit VLM post-training pipeline" id="MultiVoucher-Audit-VLM-post-training-pipeline">
+    <mxGraphModel dx="1600" dy="850" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="850" math="0" shadow="0" defaultFontFamily="Noto Sans JP">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="e1" value="SFT" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#546E7A;strokeWidth=2;endArrow=block;fontFamily=Noto Sans JP;fontSize=14;" edge="1" parent="1" source="train_data" target="sft">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" value="generate" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#546E7A;strokeWidth=2;endArrow=block;fontFamily=Noto Sans JP;fontSize=14;" edge="1" parent="1" source="sft" target="rollout">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" value="score + audit" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#546E7A;strokeWidth=2;endArrow=block;fontFamily=Noto Sans JP;fontSize=14;" edge="1" parent="1" source="rollout" target="pairs">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" value="preference train" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#546E7A;strokeWidth=2;endArrow=block;fontFamily=Noto Sans JP;fontSize=14;" edge="1" parent="1" source="pairs" target="dpo">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" value="baseline" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#546E7A;strokeWidth=2;endArrow=block;fontFamily=Noto Sans JP;fontSize=14;dashed=1;" edge="1" parent="1" source="sft" target="probe">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="checkpoints" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#546E7A;strokeWidth=2;endArrow=block;fontFamily=Noto Sans JP;fontSize=14;" edge="1" parent="1" source="dpo" target="probe">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" value="earliest eligible" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#546E7A;strokeWidth=2;endArrow=block;fontFamily=Noto Sans JP;fontSize=14;" edge="1" parent="1" source="probe" target="selected">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" value="full validation" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#546E7A;strokeWidth=2;endArrow=block;fontFamily=Noto Sans JP;fontSize=14;" edge="1" parent="1" source="selected" target="full_gate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" value="business baseline" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2E7D32;strokeWidth=2;endArrow=block;fontFamily=Noto Sans JP;fontSize=14;dashed=1;" edge="1" parent="1" source="sft" target="full_gate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="train_data" value="Train-only MultiVoucher cases&#10;structured targets + evidence" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#E3F2FD;strokeColor=#37474F;strokeWidth=2;fontColor=#263238;fontFamily=Noto Sans JP;fontSize=16;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="55" y="130" width="245" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="sft" value="Structured Repair SFT v3&#10;480-case repair mix" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;fontColor=#263238;fontFamily=Noto Sans JP;fontSize=16;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="365" y="130" width="245" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="rollout" value="Model sampling&#10;240 cases x 4 completions" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#FFF8E1;strokeColor=#F9A825;strokeWidth=2;fontColor=#263238;fontFamily=Noto Sans JP;fontSize=16;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="675" y="130" width="245" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="pairs" value="Model-error-mined pairs&#10;120 train + 24 probe" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#F3E5F5;strokeColor=#7B1FA2;strokeWidth=2;fontColor=#263238;fontFamily=Noto Sans JP;fontSize=16;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="985" y="130" width="245" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="dpo" value="DPO v3&#10;weak 40-step + strong continuation" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#FCE4EC;strokeColor=#C2185B;strokeWidth=2;fontColor=#263238;fontFamily=Noto Sans JP;fontSize=16;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="1295" y="130" width="245" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="probe" value="Case-disjoint alignment probe&#10;reward +0.167; pair rate +11.1pp" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#E0F2F1;strokeColor=#00796B;strokeWidth=2;fontColor=#263238;fontFamily=Noto Sans JP;fontSize=16;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="790" y="365" width="300" height="115" as="geometry" />
+        </mxCell>
+        <mxCell id="selected" value="Checkpoint-15 selected&#10;probe-local alignment signal" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#FFF3E0;strokeColor=#EF6C00;strokeWidth=2;fontColor=#263238;fontFamily=Noto Sans JP;fontSize=16;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="1165" y="365" width="275" height="115" as="geometry" />
+        </mxCell>
+        <mxCell id="full_gate" value="152-case train_decode_dev gate&#10;JSON / schema / audit / HRM / evidence" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;align=center;verticalAlign=middle;fillColor=#ECEFF1;strokeColor=#455A64;strokeWidth=2;fontColor=#263238;fontFamily=Noto Sans JP;fontSize=16;spacing=8;" vertex="1" parent="1">
+          <mxGeometry x="935" y="610" width="335" height="125" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

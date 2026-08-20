@@ -1,0 +1,33 @@
+{
+  "stage": "model_mined_dpo_v3_pairs",
+  "rollout_cases": 240,
+  "eligible_pairs": 146,
+  "train_pairs": 120,
+  "holdout_pairs": 24,
+  "train_bucket_counts": {
+    "low_pass": 52,
+    "order_id_mismatch": 68
+  },
+  "holdout_bucket_counts": {
+    "order_id_mismatch": 18,
+    "low_pass": 6
+  },
+  "chosen_source_counts": {
+    "model_generated": 66,
+    "expert_corrected_target": 78
+  },
+  "expert_correction_rate": 0.5416666666666666,
+  "rejected_source_counts": {
+    "synthetic_false_escalation_calibration": 58,
+    "model_generated": 86
+  },
+  "reward_gap_min": 0.15937499999999982,
+  "reward_gap_max": 0.6,
+  "reward_gap_mean": 0.5722916666666666,
+  "train_holdout_overlap": 0,
+  "outputs": {
+    "train": "data/mv_audit/dpo_v3_model_mined/pairs_train.jsonl",
+    "holdout": "data/mv_audit/dpo_v3_model_mined/pairs_holdout.jsonl",
+    "probe": "data/mv_audit/dpo_v3_model_mined/alignment_probe.jsonl"
+  }
+}

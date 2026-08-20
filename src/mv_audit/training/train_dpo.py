@@ -31,6 +31,7 @@ class DPOExample:
     sft_loss_weight: float = 0.0
     pair_id: str | None = None
     pair_type: str | None = None
+    ground_truth: dict[str, Any] | None = None
 
 
 def _section(config: dict[str, Any], name: str) -> dict[str, Any]:
@@ -54,6 +55,7 @@ def _read_examples(path: str | Path, *, max_samples: int | None) -> list[DPOExam
                 sft_loss_weight=float(row.get("sft_loss_weight", 0.0)),
                 pair_id=str(row.get("pair_id") or row.get("id") or ""),
                 pair_type=str(row.get("pair_type") or ""),
+                ground_truth=dict(row.get("ground_truth") or {}),
             )
         )
         if max_samples is not None and len(examples) >= max_samples:
@@ -79,6 +81,7 @@ def _read_existing_image_examples(path: str | Path, *, max_samples: int | None) 
             sft_loss_weight=float(row.get("sft_loss_weight", 0.0)),
             pair_id=str(row.get("pair_id") or row.get("id") or ""),
             pair_type=str(row.get("pair_type") or ""),
+            ground_truth=dict(row.get("ground_truth") or {}),
         )
         if not _image_paths_exist(example):
             skipped_missing_images += 1
@@ -160,7 +163,11 @@ def _score_preference_examples(
     rejected_scores: list[dict[str, Any]] = []
     reward_gaps: list[float] = []
     for example in examples:
-        truth = {"output": json.loads(example.chosen)}
+        truth = (
+            example.ground_truth
+            if example.ground_truth and isinstance(example.ground_truth.get("output"), dict)
+            else {"output": json.loads(example.chosen)}
+        )
         chosen = score_output(example.chosen, truth, example.images, output_schema)
         rejected = score_output(example.rejected, truth, example.images, output_schema)
         chosen_scores.append(chosen)
@@ -231,6 +238,7 @@ def _dry_run(config: dict[str, Any], *, max_samples: int) -> None:
                 "beta": float(train_config.get("beta", 0.1)),
                 "lambda_sft": float(train_config.get("lambda_sft", 0.0)),
                 "max_weight": float(train_config.get("max_weight", 3.0)),
+                "logprob_normalization": str(train_config.get("logprob_normalization", "sum")).strip().lower(),
                 "early_stop_metric": str(train_config.get("early_stop_metric", "") or ""),
                 "weight_summary": _weight_summary(examples),
                 **audit,
@@ -300,7 +308,13 @@ def _model_device(model: Any) -> Any:
     return next(model.parameters()).device
 
 
-def _sequence_logps(model: Any, batch: dict[str, Any], *, logprob_chunk_size: int = 64) -> Any:
+def _sequence_logps(
+    model: Any,
+    batch: dict[str, Any],
+    *,
+    logprob_chunk_size: int = 64,
+    normalization: str = "sum",
+) -> Any:
     import torch
 
     labels = batch["labels"]
@@ -321,6 +335,11 @@ def _sequence_logps(model: Any, batch: dict[str, Any], *, logprob_chunk_size: in
             index=chunk_labels.unsqueeze(-1),
         ).squeeze(-1)
         sequence_logps = sequence_logps + (chunk_logps * chunk_mask).sum(dim=-1)
+    normalized = normalization.strip().lower()
+    if normalized == "mean_token":
+        return sequence_logps / _sequence_token_counts(batch).to(sequence_logps.device)
+    if normalized != "sum":
+        raise ValueError(f"Unsupported logprob_normalization: {normalization!r}")
     return sequence_logps
 
 
@@ -377,6 +396,8 @@ def _evaluate_preference_logits(
     batch_size: int,
     max_examples: int,
     max_weight: float,
+    logprob_normalization: str,
+    image_max_pixels: int | None,
 ) -> dict[str, float]:
     import torch
 
@@ -391,7 +412,10 @@ def _evaluate_preference_logits(
             "holdout_reference_drift": 0.0,
         }
     selected = examples[:max_examples]
-    collator = DataCollatorForQwenVLSFT(processor)
+    collator = DataCollatorForQwenVLSFT(
+        processor,
+        image_max_pixels=image_max_pixels,
+    )
     margins: list[float] = []
     chosen_logps: list[float] = []
     rejected_logps: list[float] = []
@@ -408,14 +432,17 @@ def _evaluate_preference_logits(
             rejected_batch = collator([_as_sft_example(example, example.rejected) for example in batch_examples])
             chosen_batch = _move_batch_to_device(chosen_batch, _model_device(model))
             rejected_batch = _move_batch_to_device(rejected_batch, _model_device(model))
-            ref_chosen = _sequence_logps(ref_model, _move_batch_to_device(chosen_batch, _model_device(ref_model)))
-            ref_rejected = _sequence_logps(ref_model, _move_batch_to_device(rejected_batch, _model_device(ref_model)))
-            policy_chosen = _sequence_logps(model, chosen_batch)
-            policy_rejected = _sequence_logps(model, rejected_batch)
+            ref_chosen = _sequence_logps(ref_model, _move_batch_to_device(chosen_batch, _model_device(ref_model)), normalization=logprob_normalization)
+            ref_rejected = _sequence_logps(ref_model, _move_batch_to_device(rejected_batch, _model_device(ref_model)), normalization=logprob_normalization)
+            policy_chosen = _sequence_logps(model, chosen_batch, normalization=logprob_normalization)
+            policy_rejected = _sequence_logps(model, rejected_batch, normalization=logprob_normalization)
             logits = (policy_chosen - policy_rejected) - (ref_chosen - ref_rejected)
             weights = _example_weights(batch_examples, device=logits.device, max_weight=max_weight)
-            token_counts = _sequence_token_counts(chosen_batch).to(policy_chosen.device)
-            nll = -policy_chosen / token_counts
+            if logprob_normalization == "mean_token":
+                nll = -policy_chosen
+            else:
+                token_counts = _sequence_token_counts(chosen_batch).to(policy_chosen.device)
+                nll = -policy_chosen / token_counts
             margins.append(float(_weighted_mean(logits, weights).detach().cpu()))
             chosen_logps.append(float(_weighted_mean(policy_chosen, weights).detach().cpu()))
             rejected_logps.append(float(_weighted_mean(policy_rejected, weights).detach().cpu()))
@@ -448,8 +475,12 @@ def _load_sft_policy(config: dict[str, Any]):
         raise ImportError("peft and transformers are required for DPO training.") from exc
 
     model_config = _section(config, "model")
-    if not _checkpoint_has_adapter(model_config["sft_checkpoint_dir"]):
-        raise FileNotFoundError(f"SFT adapter checkpoint is incomplete: {model_config['sft_checkpoint_dir']}")
+    sft_checkpoint = Path(str(model_config["sft_checkpoint_dir"]))
+    policy_checkpoint = Path(str(model_config.get("policy_checkpoint_dir") or sft_checkpoint))
+    if not _checkpoint_has_adapter(sft_checkpoint):
+        raise FileNotFoundError(f"SFT reference adapter checkpoint is incomplete: {sft_checkpoint}")
+    if not _checkpoint_has_adapter(policy_checkpoint):
+        raise FileNotFoundError(f"Policy adapter checkpoint is incomplete: {policy_checkpoint}")
     model_path = resolve_model_path(model_config)
     model_class = resolve_model_class()
     processor = AutoProcessor.from_pretrained(model_path, trust_remote_code=bool(model_config.get("trust_remote_code", True)))
@@ -461,7 +492,7 @@ def _load_sft_policy(config: dict[str, Any]):
     if dtype:
         base_kwargs["torch_dtype"] = dtype
     policy = model_class.from_pretrained(model_path, **base_kwargs)
-    policy = PeftModel.from_pretrained(policy, str(model_config["sft_checkpoint_dir"]), is_trainable=True)
+    policy = PeftModel.from_pretrained(policy, str(policy_checkpoint), is_trainable=True)
 
     ref_policy = model_class.from_pretrained(model_path, **base_kwargs)
     ref_policy = PeftModel.from_pretrained(ref_policy, str(model_config["sft_checkpoint_dir"]), is_trainable=False)
@@ -526,7 +557,11 @@ def _train(config: dict[str, Any], *, max_samples: int | None) -> None:
 
     ref_policy.eval()
     policy.train()
-    collator = DataCollatorForQwenVLSFT(processor)
+    image_max_pixels = train_config.get("image_max_pixels")
+    collator = DataCollatorForQwenVLSFT(
+        processor,
+        image_max_pixels=int(image_max_pixels) if image_max_pixels else None,
+    )
     optimizer = torch.optim.AdamW(
         [parameter for parameter in policy.parameters() if parameter.requires_grad],
         lr=float(train_config.get("learning_rate", 5e-6)),
@@ -540,6 +575,12 @@ def _train(config: dict[str, Any], *, max_samples: int | None) -> None:
         raise ValueError(f"training.loss_type must be 'dpo' or 'ipo', got {loss_type!r}.")
     ipo_target_margin = _ipo_target_margin(beta=beta, loss_type=loss_type)
     max_weight = float(train_config.get("max_weight", 3.0))
+    logprob_normalization = str(train_config.get("logprob_normalization", "sum")).strip().lower()
+    if logprob_normalization not in {"sum", "mean_token"}:
+        raise ValueError(
+            "training.logprob_normalization must be 'sum' or 'mean_token', "
+            f"got {logprob_normalization!r}."
+        )
     lambda_sft = float(train_config.get("lambda_sft", 0.0))
     early_stop_metric = str(train_config.get("early_stop_metric", "") or "")
     logging_steps = int(train_config.get("logging_steps", 10))
@@ -565,18 +606,21 @@ def _train(config: dict[str, Any], *, max_samples: int | None) -> None:
             autocast_enabled = bool(train_config.get("bf16", True)) and torch.cuda.is_available()
             with torch.autocast(device_type="cuda", dtype=torch.bfloat16, enabled=autocast_enabled):
                 with torch.no_grad():
-                    ref_chosen = _sequence_logps(ref_policy, _move_batch_to_device(chosen_batch, _model_device(ref_policy)))
-                    ref_rejected = _sequence_logps(ref_policy, _move_batch_to_device(rejected_batch, _model_device(ref_policy)))
-                policy_chosen = _sequence_logps(policy, chosen_batch)
-                policy_rejected = _sequence_logps(policy, rejected_batch)
+                    ref_chosen = _sequence_logps(ref_policy, _move_batch_to_device(chosen_batch, _model_device(ref_policy)), normalization=logprob_normalization)
+                    ref_rejected = _sequence_logps(ref_policy, _move_batch_to_device(rejected_batch, _model_device(ref_policy)), normalization=logprob_normalization)
+                policy_chosen = _sequence_logps(policy, chosen_batch, normalization=logprob_normalization)
+                policy_rejected = _sequence_logps(policy, rejected_batch, normalization=logprob_normalization)
                 logits = (policy_chosen - policy_rejected) - (ref_chosen - ref_rejected)
                 weights = _example_weights(batch_examples, device=logits.device, max_weight=max_weight)
                 preference_loss_values = _preference_loss_values(logits, beta=beta, loss_type=loss_type)
                 preference_loss = _weighted_mean(preference_loss_values, weights)
                 sft_loss = torch.zeros((), device=logits.device, dtype=preference_loss.dtype)
                 if lambda_sft > 0:
-                    token_counts = _sequence_token_counts(chosen_batch).to(policy_chosen.device)
-                    chosen_nll = -policy_chosen / token_counts
+                    if logprob_normalization == "mean_token":
+                        chosen_nll = -policy_chosen
+                    else:
+                        token_counts = _sequence_token_counts(chosen_batch).to(policy_chosen.device)
+                        chosen_nll = -policy_chosen / token_counts
                     nll_weights = weights * _sft_loss_weights(batch_examples, device=logits.device)
                     if float(nll_weights.detach().sum().cpu()) > 0:
                         sft_loss = _weighted_mean(chosen_nll, nll_weights)
@@ -591,6 +635,7 @@ def _train(config: dict[str, Any], *, max_samples: int | None) -> None:
                     "epoch": float(epoch + 1),
                     "global_step": float(global_step),
                     "loss_type": loss_type,
+                    "logprob_normalization": logprob_normalization,
                     "loss": float(loss.detach().cpu()),
                     "dpo_loss": float(preference_loss.detach().cpu()),
                     "preference_loss": float(preference_loss.detach().cpu()),
@@ -605,7 +650,7 @@ def _train(config: dict[str, Any], *, max_samples: int | None) -> None:
                 history.append(record)
                 if global_step % logging_steps == 0 or global_step == 1:
                     print(json.dumps({"stage": "dpo_train", **record}, ensure_ascii=False))
-                if holdout_examples and eval_steps > 0 and (global_step % eval_steps == 0 or global_step == 1):
+                if holdout_examples and eval_steps > 0 and global_step % eval_steps == 0:
                     holdout_record = {
                         "global_step": float(global_step),
                         **_evaluate_preference_logits(
@@ -617,6 +662,8 @@ def _train(config: dict[str, Any], *, max_samples: int | None) -> None:
                             batch_size=batch_size,
                             max_examples=max_holdout_examples,
                             max_weight=max_weight,
+                            logprob_normalization=logprob_normalization,
+                            image_max_pixels=int(image_max_pixels) if image_max_pixels else None,
                         ),
                     }
                     holdout_history.append(holdout_record)
@@ -646,6 +693,8 @@ def _train(config: dict[str, Any], *, max_samples: int | None) -> None:
                     batch_size=batch_size,
                     max_examples=max_holdout_examples,
                     max_weight=max_weight,
+                    logprob_normalization=logprob_normalization,
+                    image_max_pixels=int(image_max_pixels) if image_max_pixels else None,
                 ),
             }
         )
@@ -659,6 +708,7 @@ def _train(config: dict[str, Any], *, max_samples: int | None) -> None:
                 "beta": beta,
                 "lambda_sft": lambda_sft,
                 "max_weight": max_weight,
+                "logprob_normalization": logprob_normalization,
                 "early_stop_metric": early_stop_metric,
                 "ipo_target_margin": ipo_target_margin,
                 **preference_audit,
