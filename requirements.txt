@@ -1,16 +1,32 @@
 torch
+#作用：PyTorch，张量计算、CUDA、训练反传
 transformers
+#作用：Hugging Face模型、Processor、Trainer
 accelerate
+#作用：多卡、混合精度、Trainer底层加速生态
 peft
+#作用：LORA、adapter微调
 trl
+#作用：RLHF、DPO、GRPO训练库。主训练代码目前没用直接使用DPOtrainer或GRPOtrainer，当前DPO/GRPO loss均是手写实现
 deepspeed
+#大模型分布式训练、ZeRo优化
 qwen-vl-utils
+#作用：Qwen-vl多模态输入预处理。把消息里的图片/视频整理成Qwen processor可吃的输入
 pillow
+#作用：图片读写、绘制、增强。用于票据渲染、bbox可视化、图像扰动
 opencv-python
+#作用：OpenCV，图像处理
 numpy
+#作用：数值计算
 pandas
+#作用：数据处理
 scikit-learn
+#作用：机器学习指标、数据划分
 jsonschema
+#作用：JSON模式验证
 pyyaml
+#作用：YAML文件读写。用于读取/写入训练、数据、评估配置
 tqdm
+#作用：进度条显示
 matplotlib
+#作用：数据可视化

@@ -4,9 +4,9 @@
 
 本阶段完成了从 Structured Repair SFT v3 出发的模型采样、困难偏好对构造、DPO 训练、case-disjoint alignment probe、152 条 `train_decode_dev` 全量门禁和逐 case 错误归因。
 
-- `repair_sft_r3` 是当前开发门禁上的 `PRODUCTION_CANDIDATE`，尚未运行 final holdout，也未部署。
+- `repair_sft_r3` 曾是开发门禁上的 `PRODUCTION_CANDIDATE`，但后续 final_holdout_v1 已消耗且失败，sample500 历史口径诊断也退化，最终状态为 `FINAL_HOLDOUT_FAILED / NOT_DEPLOYED`。
 - DPO v3 checkpoint-15 是 `ALIGNMENT_RESEARCH_CANDIDATE`：局部 probe 有可测量提升，但全量业务门禁未通过，禁止替代 SFT v3。
-- 本阶段不使用 sample500/Test 选模型或调 reward；sample500 仅保留为 M2/DPO v1/v2 的历史 benchmark。
+- 本阶段不使用 sample500/Test 选模型或调 reward；sample500 保留为历史 benchmark，R3 的 sample500 补跑仅用于 final 失败后的诊断补表。
 
 ## 2. Benchmark 边界
 
@@ -14,7 +14,7 @@
 
 | Benchmark | 用途 | 模型 | 规模 |
 | --- | --- | --- | ---: |
-| sample500 | 历史业务 benchmark | M2、DPO v1、DPO v2 | 4 个 split，每个 500 条，表中为 split 平均 |
+| sample500 | 历史业务 benchmark / 失败后诊断 | M2、DPO v1、DPO v2、R3 diagnostic | 4 个 split，每个 500 条，表中为 split 平均 |
 | train_decode_dev | Train-only 开发门禁 | SFT v3、DPO v3 | 152 条 |
 
 因此，SFT v3 的 `0.9671` 不能直接与 M2 的 `0.7735` 宣称为同一测试集上的提升。完整机器可读表见 [post_training_metrics.csv](post_training_metrics.csv)。
@@ -47,6 +47,7 @@ M2 -> R1 -> R2 -> R3 -> DPO weak checkpoint-40 -> DPO strong checkpoint-15 六�
 | M2 LoRA-SFT | 0.7735 | 0.2427 | 0.8035 | 历史 sample500 baseline |
 | DPO v1 | 0.6685 | 0.2373 | 0.7987 | 明显负迁移 |
 | DPO v2 | 0.7645 | 0.2546 | 0.7952 | 恢复 Audit，但未改善 HRM |
+| Structured Repair SFT v3 | 0.6075 | 0.4217 | 0.6801 | final 失败后诊断；相对 M2 明显退化 |
 
 ### 3.2 当前 train_decode_dev
 
@@ -149,7 +150,7 @@ checkpoint-15 在 `train_decode_dev` 上得到：
 
 | 角色 | 模型 | 状态 | 说明 |
 | --- | --- | --- | --- |
-| Production candidate | `repair_sft_r3` | `NOT_DEPLOYED` | 开发门禁最佳；final holdout 未运行 |
+| Final-holdout failed | `repair_sft_r3` | `NOT_DEPLOYED` | 开发门禁最佳未泛化；final_holdout_v1 与 sample500 诊断均退化 |
 | Alignment research candidate | DPO v3 checkpoint-15 | `deployment_eligible=false` | probe 有局部收益，全量 gate 未通过 |
 | Historical baseline | M2 | frozen sample500 baseline | 用于保留 Phase07/08 历史可比性 |
 
@@ -180,4 +181,4 @@ python tools/build_phase10_post_training_report.py
 python tools/build_phase10_diagrams.py
 ```
 
-本报告只使用已完成的 Train-only 产物。没有启动新训练、sample500/Test 推理或 final holdout。
+本报告主体使用 Train-only 产物；R3 sample500 行来自后续诊断补跑，仅用于补表和失败分析，没有启动新训练或 DPO V3 checkpoint-15 推理。

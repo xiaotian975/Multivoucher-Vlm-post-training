@@ -1,0 +1,27 @@
+seed: 42
+
+model:
+  model_name_or_path: Qwen/Qwen3-VL-8B-Instruct
+  local_model_dir: models/Qwen3-VL-8B-Instruct
+  dtype: auto
+  device_map: auto
+  trust_remote_code: true
+
+data:
+  train_file: data/mv_audit/sft_main/train.jsonl
+  raw_cases_dir: data/mv_audit/raw_cases/main
+  annotations_dir: data/mv_audit/annotations_main
+  output_schema: configs/schema/output_schema.json
+
+inference:
+  predictions_dir: outputs/predictions/final_holdout_v1
+  ground_truth_dir: outputs/eval_sets/final_holdout_v1
+  sample_manifest_dir: data/mv_audit/final_holdout_v1/manifests
+  sft_adapter_dir: outputs/checkpoints/sft/qwen3vl_8b_high_risk_repair_r3_order_id_structured_from_r2
+  few_shot_count: 2
+  max_new_tokens: 1536
+  temperature: 0.0
+  top_p: 0.9
+  image_max_pixels: 262144
+  flush_every: 1
+  schema_guard: true

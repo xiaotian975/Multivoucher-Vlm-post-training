@@ -1,0 +1,111 @@
+{
+  "per_split": {
+    "test_clean": {
+      "error_file": "outputs\\eval_reports\\final_holdout_v1\\repair_sft_r3\\repair_sft_r3_test_clean_errors.jsonl",
+      "error_rows": 122
+    },
+    "test_robust": {
+      "error_file": "outputs\\eval_reports\\final_holdout_v1\\repair_sft_r3\\repair_sft_r3_test_robust_errors.jsonl",
+      "error_rows": 111
+    },
+    "test_unseen_template": {
+      "error_file": "outputs\\eval_reports\\final_holdout_v1\\repair_sft_r3\\repair_sft_r3_test_unseen_template_errors.jsonl",
+      "error_rows": 133
+    },
+    "test_hard_negative": {
+      "error_file": "outputs\\eval_reports\\final_holdout_v1\\repair_sft_r3\\repair_sft_r3_test_hard_negative_errors.jsonl",
+      "error_rows": 88
+    }
+  },
+  "issue_counts": {
+    "bbox_strict_error": 192,
+    "schema_invalid": 154,
+    "business_metrics_zeroed": 154,
+    "audit_mismatch": 130,
+    "high_risk_miss": 118,
+    "unsupported_evidence": 116,
+    "hallucination": 115
+  },
+  "problem_class_counts": {
+    "evidence_not_trustworthy": 287,
+    "model_missed_high_risk": 229,
+    "schema_contract_failure": 154,
+    "decision_or_risk_mismatch": 130
+  },
+  "truth_to_pred_risk_counts": {
+    "high -> low": 114,
+    "high -> None": 111,
+    "high -> high": 108,
+    "medium -> medium": 42,
+    "medium -> None": 30,
+    "low -> low": 19,
+    "low -> None": 13,
+    "medium -> high": 11,
+    "high -> medium": 4,
+    "medium -> low": 2
+  },
+  "truth_to_pred_audit_counts": {
+    "reject_recommendation -> pass": 114,
+    "reject_recommendation -> reject_recommendation": 82,
+    "manual_review -> manual_review": 68,
+    "missing_info -> None": 67,
+    "reject_recommendation -> None": 59,
+    "pass -> pass": 19,
+    "manual_review -> None": 15,
+    "pass -> None": 13,
+    "manual_review -> reject_recommendation": 11,
+    "reject_recommendation -> manual_review": 3,
+    "manual_review -> pass": 2,
+    "missing_info -> missing_info": 1
+  },
+  "examples_by_problem_class": {
+    "schema_contract_failure": [
+      "MV_MAIN_015604",
+      "MV_MAIN_009134",
+      "MV_MAIN_038436",
+      "MV_MAIN_008137",
+      "MV_MAIN_011799",
+      "MV_MAIN_000975",
+      "MV_MAIN_000448",
+      "MV_MAIN_018447",
+      "MV_MAIN_027646",
+      "MV_MAIN_004541"
+    ],
+    "model_missed_high_risk": [
+      "MV_MAIN_015604",
+      "MV_MAIN_009134",
+      "MV_MAIN_005376",
+      "MV_MAIN_038436",
+      "MV_MAIN_008137",
+      "MV_MAIN_027947",
+      "MV_MAIN_000448",
+      "MV_MAIN_018447",
+      "MV_MAIN_027646",
+      "MV_MAIN_031752"
+    ],
+    "evidence_not_trustworthy": [
+      "MV_MAIN_032781",
+      "MV_MAIN_032982",
+      "MV_MAIN_034847",
+      "MV_MAIN_005376",
+      "MV_MAIN_040543",
+      "MV_MAIN_005380",
+      "MV_MAIN_017551",
+      "MV_MAIN_017555",
+      "MV_MAIN_027947",
+      "MV_MAIN_031752"
+    ],
+    "decision_or_risk_mismatch": [
+      "MV_MAIN_005376",
+      "MV_MAIN_027947",
+      "MV_MAIN_031752",
+      "MV_MAIN_031364",
+      "MV_MAIN_026889",
+      "MV_MAIN_038875",
+      "MV_MAIN_020005",
+      "MV_MAIN_027673",
+      "MV_MAIN_018697",
+      "MV_MAIN_038092"
+    ]
+  }
+}

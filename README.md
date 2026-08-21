@@ -1,6 +1,6 @@
 # MultiVoucher-Audit：多凭证报销审计 VLM 后训练
 
-更新时间：2026-08-20
+更新时间：2026-08-21
 
 > 一个从数据合成、LoRA-SFT、结构化错误修复、Model-Mined DPO、业务评测到模型归档的完整 VLM 后训练项目。基座模型为 `Qwen3-VL-8B-Instruct`，输入发票、支付截图、报销申请单和订单截图，输出可校验、可定位、可追责的 Evidence-Grounded JSON。
 
@@ -15,10 +15,10 @@
 | 原生模型到可用结构化审计 | M0 zero-shot 的 Audit Accuracy 为 `0.0000`，M2 LoRA-SFT 在历史 sample500 上达到 `0.7735`，JSON Validity 为 `1.0000` |
 | 定位并修复高风险漏检 | Structured Repair SFT v3 在 152 条 Train-only `train_decode_dev` 上达到 Audit `96.71%`、HRM `5.75%`、Evidence Support `98.76%` |
 | 完成偏好对齐研究 | Model-Mined DPO v3 在独立 probe 上使 task reward 提升 `+0.167`、Order-ID Pair Rate 提升 `+11.1pp` |
-| 建立模型治理结论 | SFT v3 为 `PRODUCTION_CANDIDATE / NOT_DEPLOYED`；DPO checkpoint-15 为 `ALIGNMENT_RESEARCH_CANDIDATE`，因 full gate 未通过而不替代 SFT |
+| 建立模型治理结论 | SFT v3 在 final_holdout_v1 与 sample500 诊断中均退化，最终标记 `FINAL_HOLDOUT_FAILED / NOT_DEPLOYED`；DPO checkpoint-15 为 `ALIGNMENT_RESEARCH_CANDIDATE`，因 full gate 未通过而不替代 SFT |
 | 完成可复现归档 | M2 -> R1 -> R2 -> R3 -> DPO weak-40 -> DPO strong-15 六级 adapter 全部在本地通过 SHA256、配置和 safetensors 头部校验 |
 
-“Production candidate”只表示通过 Train-only 开发门禁；项目没有运行 final holdout，也没有部署。历史 sample500 与当前 train_decode_dev 是两套不同 benchmark，本文始终分表报告。
+“Production candidate”只表示曾通过 Train-only 开发门禁；后续 final_holdout_v1 已消耗且失败，模型没有部署。历史 sample500、Train-only train_decode_dev 与 final_holdout_v1 是不同 benchmark，本文始终分表报告。
 
 ### 我在项目中负责什么
 
@@ -162,15 +162,16 @@ DPO v3 改成：
 
 ## 实验结果总表
 
-### 历史 sample500：仅比较 M2、DPO v1、DPO v2
+### 历史 sample500：M2、DPO v1/v2 与 R3 诊断
 
-sample500 是四个 split、每个 500 条的历史 benchmark。表内数值为 split 平均。
+sample500 是四个 split、每个 500 条的历史 benchmark。表内数值为 split 平均；`repair_sft_r3` 是 final 失败后的诊断补跑，不用于重新选模或调参。
 
 | 模型 | Audit Accuracy | High-risk Miss | Evidence Support | 结论 |
 | --- | ---: | ---: | ---: | --- |
 | M2 LoRA-SFT | **0.7735** | 0.2427 | **0.8035** | 历史业务 baseline |
 | DPO v1 | 0.6685 | **0.2373** | 0.7987 | loss 收敛但 Audit 明显负迁移 |
 | DPO v2 | 0.7645 | 0.2546 | 0.7952 | 恢复 Accuracy，HRM 未改善 |
+| Structured Repair SFT v3 | 0.6075 | 0.4217 | 0.6801 | final 失败后诊断；相对 M2 明显退化 |
 
 ### Train-only train_decode_dev：仅比较 R3 与 DPO v3
 
@@ -178,6 +179,25 @@ sample500 是四个 split、每个 500 条的历史 benchmark。表内数值为 
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Structured Repair SFT v3 | 1.000 / 1.000 | **0.9671** | **0.0575** | 0.9876 | 23 |
 | DPO v3 strong checkpoint-15 | 1.000 / 1.000 | 0.8684 | 0.1379 | **0.9904** | 40 |
+
+### 2026-08-21 post-final 诊断归档
+
+final_holdout_v1 已在远端完成并消耗，本次只归档已有结果和补跑 sample500 诊断，不训练、不调参、不重跑 final_holdout、不运行 DPO V3 checkpoint-15。
+
+| Benchmark | 执行方式 | 本地归档 | Audit Accuracy | High-risk Miss | Evidence Support | 结论 |
+| --- | --- | --- | ---: | ---: | ---: | --- |
+| final_holdout_v1 | 使用已有 4 split predictions 重新生成 metrics/errors/summary；不重新推理 | `docs/experiments/final_holdout_v1/`、`outputs/eval_reports/final_holdout_v1/`、`outputs/predictions/final_holdout_v1/` | 0.7160 | 0.3152 | 0.8358 | `FINAL_HOLDOUT_FAILED / NOT_DEPLOYED` |
+| sample500 historical | `repair_sft_r3` 按历史 sample500 口径推理 4 x 500；不启用 DPO V3 checkpoint-15 | `docs/experiments/repair_sft_r3_sample500_diagnostic/`、`outputs/eval_reports/repair_sft_r3_sample500_diagnostic/`、`outputs/predictions/repair_sft_r3_sample500_diagnostic/` | 0.6075 | 0.4217 | 0.6801 | 相对 M2 baseline 明显退化 |
+
+本次 sample500 使用配置 [repair_sft_r3_sample500_historical_server.yaml](configs/train/repair_sft_r3_sample500_historical_server.yaml) 和入口 [24_run_repair_sft_r3_sample500_diagnostic.sh](scripts/24_run_repair_sft_r3_sample500_diagnostic.sh)。机器可读补表见 [post_training_metrics.csv](docs/experiments/phase10_model_error_mined_dpo_v3/post_training_metrics.csv)，final 与 sample500 归档都包含 `artifact_manifest.json` 以记录本地文件 SHA256。sample500 与 final_holdout 结果均为 diagnosis/reporting-only，不得回流训练、reward tuning 或 checkpoint 选择。
+
+two-stage supervised tuning: broad task SFT followed by targeted repair SFT
+
+SFT两阶段监督微调：先用大规模任务 SFT 建立多凭证审计基础能力，再用小规模 Train-only Repair SFT 对高风险漏报和证据定位薄弱点进行定向修复。
+
+Qwen3-VL base model → 主 LoRA-SFT → Repair SFT R1/R2/R3 精修 → 得到当前最好 SFT 候选 repair_sft_r3
+
+Repair SFT 的有效性来自“先大规模 SFT 建立通用任务能力，再用小规模高置信错题样本进行定向行为修复”。它不是小数据从零训练出强模型，而是在已有 SFT 能力上做高信号纠偏。
 
 ### DPO v3 alignment probe
 
@@ -457,7 +477,7 @@ M2/R1/R2/weak-40 的 minimal tar 在 `outputs/model_candidates/model_lineage/arc
 
 ![模型选择门禁](docs/experiments/phase10_model_error_mined_dpo_v3/figures/model_selection_gate.png)
 
-- **Structured Repair SFT v3**：`PRODUCTION_CANDIDATE / NOT_DEPLOYED`。通过 152 条 Train-only 开发门禁，final holdout 未运行。
+- **Structured Repair SFT v3**：`FINAL_HOLDOUT_FAILED / NOT_DEPLOYED`。曾通过 152 条 Train-only 开发门禁，但 final_holdout_v1 与 sample500 诊断均退化。
 - **DPO v3 strong checkpoint-15**：`ALIGNMENT_RESEARCH_CANDIDATE / ALIGNMENT_GATE_NOT_MET`。probe 有局部可测收益，full gate 不允许部署。
 - **M2**：`HISTORICAL_SAMPLE500_BASELINE`。用于保留历史 benchmark，不与 train_decode_dev 横向伪比较。
 
@@ -482,11 +502,20 @@ M2/R1/R2/weak-40 的 minimal tar 在 `outputs/model_candidates/model_lineage/arc
 | DPO v1 是负结果 | M3 的 DPO loss 降到 `0.000568`、preference margin 到 `74.731`，但 `Audit Accuracy` 从 M2 `0.7735` 降到 `0.6685` | pair 训练成功不等于业务成功 |
 | DPO v2 部分修复 | M3v2 `Audit Accuracy=0.7645`，接近 M2；但 `High-risk Miss Rate=0.2546`，差于 M2 `0.2427` | 修复了 accuracy 崩塌，但没有解决高风险漏检 |
 | two-candidate ablation 不值得扩大 | `dpo_v2_baseline` 与 `auxdpo_v2_strong` 在 Train decode dev 核心指标相同，High-risk Miss 都是 `0.2299` | 继续烧完整 DPO/IPO ablation 不划算 |
-| Structured Repair SFT v3 是当前开发候选 | 在 152 条 `train_decode_dev` 上 `Audit Accuracy=0.9671`、`High-risk Miss=0.0575`、JSON/Schema 均为 `1.0` | 标记为 `PRODUCTION_CANDIDATE`，但 final holdout 未运行、尚未部署 |
+| Structured Repair SFT v3 未泛化 | 在 152 条 `train_decode_dev` 上 `Audit Accuracy=0.9671`、`High-risk Miss=0.0575`，但 final_holdout_v1 只有 `0.7160/0.3152`，sample500 诊断只有 `0.6075/0.4217` | 标记为 `FINAL_HOLDOUT_FAILED / NOT_DEPLOYED` |
 | DPO v3 有局部对齐信号 | 24 条 probe reward 提升 `0.1667`、order-id 双侧证据命中率提升 `11.11pp` | 说明偏好信号可改变目标行为 |
 | DPO v3 未通过全量门禁 | 152 条上 `Audit Accuracy=0.8684`、`High-risk Miss=0.1379` | 仅标记为 `ALIGNMENT_RESEARCH_CANDIDATE`，禁止替代 SFT v3 |
 
 一句话总结：M2 仍是冻结的 sample500 历史基线；Structured Repair SFT v3 是当前 Train-only 开发门禁上的 production candidate，DPO v3 完成了可测量的局部偏好对齐，但因全量门禁未通过而保留为 research candidate。
+
+| 阶段 | 动机 | 做法 | 效果 |
+|---|---|---|---|
+| DPO v1 | 先验证 DPO 能不能让模型偏向正确审计答案 | 用人工规则构造 rejected，比如把风险等级、审核结论改错 | 训练 loss 很好看，但业务效果变差，说明 rejected 太简单，模型学到了捷径 |
+| DPO v2 | 防止 v1 那种“训练上赢、业务上输” | 加 hard rejected、高风险漏报 pair、protective pair、normal calibration，并加 SFT auxiliary loss 保护原能力 | 比 v1 稳一点，但仍没有超过 SFT，高风险漏报没有改善 |
+| DPO v3 | 让偏好数据更贴近模型真实错误 | 让 SFT 模型自己生成多个答案，从真实错误输出里挖 hard pairs | 局部 probe 有提升，但完整 152 条门禁下降，所以不能替代 SFT |
+
+DPO v1 证明“简单错答案不行”；DPO v2 尝试加保护和校准；DPO v3 尝试用模型真实错误做偏好对，但最后发现它只修了一部分问题，同时伤到了整体审计决策边界。
+
 
 ## 1. 任务定义与 Benchmark
 
@@ -547,7 +576,7 @@ case_id
 | M3v2 | `M2 + conservative DPO v2 adapter` | 已完成 DPO v2 和 sample500，部分修复但未达目标 |
 | M4 | `M2/M3 + GRPO` | 未正式完成，仅有 smoke 级别代码与验证 |
 | repair_sft_r1/r2 | `M2 + High-risk Repair SFT` | 历史修复分支，不是当前候选 |
-| repair_sft_r3 | `R2 + Order-ID Structured Repair SFT` | `PRODUCTION_CANDIDATE`；152 条开发门禁完成，未运行 final holdout、未部署 |
+| repair_sft_r3 | `R2 + Order-ID Structured Repair SFT` | `FINAL_HOLDOUT_FAILED / NOT_DEPLOYED`；152 条开发门禁高分未泛化到 final_holdout_v1 和 sample500 诊断 |
 | DPO v3 checkpoint-15 | `repair_sft_r3 + Model-Error-Mined DPO` | `ALIGNMENT_RESEARCH_CANDIDATE`；probe 有提升，全量 gate 未通过 |
 
 ## 2. 合成数据集 MultiVoucher-Audit
@@ -1910,6 +1939,7 @@ Structured Repair SFT v3 使用 480 条 Train-only mix，从 R2 adapter 继续�
 | sample500 四 split 平均 | M2 SFT | 0.7735 | 0.2427 | 0.8035 | 历史 baseline |
 | sample500 四 split 平均 | DPO v1 | 0.6685 | 0.2373 | 0.7987 | research ablation |
 | sample500 四 split 平均 | DPO v2 | 0.7645 | 0.2546 | 0.7952 | research ablation |
+| sample500 四 split 平均 | Structured Repair SFT v3 | 0.6075 | 0.4217 | 0.6801 | final 失败后诊断 |
 | train_decode_dev 152 | Structured Repair SFT v3 | **0.9671** | **0.0575** | 0.9876 | production candidate |
 | train_decode_dev 152 | DPO v3 checkpoint-15 | 0.8684 | 0.1379 | **0.9904** | alignment research candidate |
 
@@ -1931,10 +1961,10 @@ checkpoint-15 在 24 条 case-disjoint alignment probe 上将 mean task reward �
 
 | 角色 | 模型 | 发布状态 |
 | --- | --- | --- |
-| `PRODUCTION_CANDIDATE` | `repair_sft_r3` | `NOT_DEPLOYED`；final holdout 未运行 |
+| `FINAL_HOLDOUT_FAILED` | `repair_sft_r3` | `NOT_DEPLOYED`；final_holdout_v1 已消耗且 sample500 诊断同步退化 |
 | `ALIGNMENT_RESEARCH_CANDIDATE` | DPO v3 checkpoint-15 | `deployment_eligible=false`；全量 gate 未通过 |
 | `HISTORICAL_SAMPLE500_BASELINE` | M2 SFT | 冻结历史 benchmark |
 
 机器可读选择记录见 [model_selection.json](docs/experiments/phase10_model_error_mined_dpo_v3/model_selection.json)，简历和面试口径见 [docs/resume_vlm_post_training.md](docs/resume_vlm_post_training.md)。
 
-SFT v3 adapter 已归档到 `outputs/model_candidates/repair_sft_r3/` 并完成远端/本地 SHA256 一致性校验；归档后服务器已关机。该状态仍是 `PRODUCTION_CANDIDATE / NOT_DEPLOYED`，不能解读为已经运行 final holdout 或完成线上部署。
+SFT v3 adapter 已归档到 `outputs/model_candidates/repair_sft_r3/` 并完成远端/本地 SHA256 一致性校验。后续 final_holdout_v1 已消耗且失败，sample500 历史口径诊断也退化；该状态是 `FINAL_HOLDOUT_FAILED / NOT_DEPLOYED`，不能解读为已部署。

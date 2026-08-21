@@ -1,0 +1,21 @@
+name: audit_eval_frozen_v1
+source_config: configs/train/repair_sft_r3_final_holdout.yaml
+model_id: repair_sft_r3
+splits:
+  - test_clean
+  - test_robust
+  - test_unseen_template
+  - test_hard_negative
+output_schema: configs/schema/output_schema.json
+prompt_policy: use_existing_batch_inference_prompt
+image_ordering: deterministic_existing_image_items_seed_42
+max_new_tokens: 1536
+temperature: 0.0
+top_p: 0.9
+image_max_pixels: 262144
+schema_guard: true
+selection_policy:
+  final_holdout_size: 1000
+  cases_per_split: 250
+  train_decode_dev_is_not_final: true
+  no_training_after_consumption: true

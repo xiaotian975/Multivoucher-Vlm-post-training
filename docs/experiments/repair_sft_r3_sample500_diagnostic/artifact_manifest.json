@@ -1,0 +1,120 @@
+﻿{
+    "experiment":  "repair_sft_r3_sample500_diagnostic",
+    "model_id":  "repair_sft_r3",
+    "protocol":  "historical_sample500",
+    "scope":  "diagnostic_only_after_final_holdout_failure",
+    "metrics_summary":  "outputs/eval_reports/repair_sft_r3_sample500_diagnostic/metrics_summary.csv",
+    "predictions_dir":  "outputs/predictions/repair_sft_r3_sample500_diagnostic/repair_sft_r3",
+    "files":  [
+                  {
+                      "path":  "docs/experiments/repair_sft_r3_sample500_diagnostic/error_cases/repair_sft_r3_test_clean_errors.jsonl",
+                      "bytes":  116216,
+                      "sha256":  "d99b8fc840008f83f0846e52edaeb8ed77e9ba0e0c934295c1686a4625fe37da"
+                  },
+                  {
+                      "path":  "docs/experiments/repair_sft_r3_sample500_diagnostic/error_cases/repair_sft_r3_test_hard_negative_errors.jsonl",
+                      "bytes":  57513,
+                      "sha256":  "d97359ea72715dbf79a54cb3d372334e94c8ae0b2529647c5b3afd0dfd78fa31"
+                  },
+                  {
+                      "path":  "docs/experiments/repair_sft_r3_sample500_diagnostic/error_cases/repair_sft_r3_test_robust_errors.jsonl",
+                      "bytes":  115056,
+                      "sha256":  "b11b18259758f3b69da485c980c02efebc441ec1a2e0f90ce8ed5d51b33957b4"
+                  },
+                  {
+                      "path":  "docs/experiments/repair_sft_r3_sample500_diagnostic/error_cases/repair_sft_r3_test_unseen_template_errors.jsonl",
+                      "bytes":  110593,
+                      "sha256":  "5b4fd08f6908738cf628eed8a2bc54a256d57ef1169dde840e1274ad9db476ca"
+                  },
+                  {
+                      "path":  "docs/experiments/repair_sft_r3_sample500_diagnostic/metrics_by_model.csv",
+                      "bytes":  825,
+                      "sha256":  "99c9fa26da634637829bc597aa482d3d56780eb765277f77552d29d097a89086"
+                  },
+                  {
+                      "path":  "docs/experiments/repair_sft_r3_sample500_diagnostic/metrics_delta_vs_history.csv",
+                      "bytes":  487,
+                      "sha256":  "08f01f7c853eb392b170ea5542153700eb81e16870dae4f4df7570539eaccea4"
+                  },
+                  {
+                      "path":  "docs/experiments/repair_sft_r3_sample500_diagnostic/metrics_summary.csv",
+                      "bytes":  854,
+                      "sha256":  "73ae847f94a9c8ebe2184cdf6d9fcdde80ee4cc6eb1b3321d819a90e0a5192b2"
+                  },
+                  {
+                      "path":  "docs/experiments/repair_sft_r3_sample500_diagnostic/README.md",
+                      "bytes":  2407,
+                      "sha256":  "eeeeb6c107d17dcfafa23adc96a8d338944e061bbede191ac76c4bd8dd882262"
+                  },
+                  {
+                      "path":  "docs/experiments/repair_sft_r3_sample500_diagnostic/split_metrics_with_history.csv",
+                      "bytes":  2661,
+                      "sha256":  "cca2ffef9dbe269d15bcd82379a68d92d4267fe35a9cfeea9ac621966314cbba"
+                  },
+                  {
+                      "path":  "outputs/eval_reports/repair_sft_r3_sample500_diagnostic/metrics_summary.csv",
+                      "bytes":  853,
+                      "sha256":  "3f8a8b0b1574c58719c3ede749902fe546280eb54a5403ca1bbec615777c9215"
+                  },
+                  {
+                      "path":  "outputs/eval_reports/repair_sft_r3_sample500_diagnostic/repair_sft_r3_test_clean_errors.jsonl",
+                      "bytes":  116216,
+                      "sha256":  "d99b8fc840008f83f0846e52edaeb8ed77e9ba0e0c934295c1686a4625fe37da"
+                  },
+                  {
+                      "path":  "outputs/eval_reports/repair_sft_r3_sample500_diagnostic/repair_sft_r3_test_clean_metrics.json",
+                      "bytes":  593,
+                      "sha256":  "e91f59290ef55f71bf58b961cd273f4706d1d980821923198322f8edba624fb5"
+                  },
+                  {
+                      "path":  "outputs/eval_reports/repair_sft_r3_sample500_diagnostic/repair_sft_r3_test_hard_negative_errors.jsonl",
+                      "bytes":  57513,
+                      "sha256":  "d97359ea72715dbf79a54cb3d372334e94c8ae0b2529647c5b3afd0dfd78fa31"
+                  },
+                  {
+                      "path":  "outputs/eval_reports/repair_sft_r3_sample500_diagnostic/repair_sft_r3_test_hard_negative_metrics.json",
+                      "bytes":  605,
+                      "sha256":  "4a1bafc797b2f36b4c3f4dd79067841271122efdfacbf5e2058122099a3d7ad1"
+                  },
+                  {
+                      "path":  "outputs/eval_reports/repair_sft_r3_sample500_diagnostic/repair_sft_r3_test_robust_errors.jsonl",
+                      "bytes":  115056,
+                      "sha256":  "b11b18259758f3b69da485c980c02efebc441ec1a2e0f90ce8ed5d51b33957b4"
+                  },
+                  {
+                      "path":  "outputs/eval_reports/repair_sft_r3_sample500_diagnostic/repair_sft_r3_test_robust_metrics.json",
+                      "bytes":  593,
+                      "sha256":  "8590dab84484ff532f3936a7c85ae1fa62b008ee01177624104bea0dae0be773"
+                  },
+                  {
+                      "path":  "outputs/eval_reports/repair_sft_r3_sample500_diagnostic/repair_sft_r3_test_unseen_template_errors.jsonl",
+                      "bytes":  110593,
+                      "sha256":  "5b4fd08f6908738cf628eed8a2bc54a256d57ef1169dde840e1274ad9db476ca"
+                  },
+                  {
+                      "path":  "outputs/eval_reports/repair_sft_r3_sample500_diagnostic/repair_sft_r3_test_unseen_template_metrics.json",
+                      "bytes":  600,
+                      "sha256":  "c0ad4e332f1db948b7ca6a0643bfb74ed784e6ad176b3f549f97d85e9b1af0d9"
+                  },
+                  {
+                      "path":  "outputs/predictions/repair_sft_r3_sample500_diagnostic/repair_sft_r3/test_clean.jsonl",
+                      "bytes":  1789121,
+                      "sha256":  "da140567f3dc9ed5150b456385cdbc80752afa149c195497a8f3717f0e32bce3"
+                  },
+                  {
+                      "path":  "outputs/predictions/repair_sft_r3_sample500_diagnostic/repair_sft_r3/test_hard_negative.jsonl",
+                      "bytes":  1877701,
+                      "sha256":  "4afa3a6719bb75c1cc44e80bef7ccc9304d51032e53fc485ce7268e8578a2072"
+                  },
+                  {
+                      "path":  "outputs/predictions/repair_sft_r3_sample500_diagnostic/repair_sft_r3/test_robust.jsonl",
+                      "bytes":  1797444,
+                      "sha256":  "cc40b9c200b9555e6da387c009e284bc800819a4553a8b806b84d40ae5976963"
+                  },
+                  {
+                      "path":  "outputs/predictions/repair_sft_r3_sample500_diagnostic/repair_sft_r3/test_unseen_template.jsonl",
+                      "bytes":  1805893,
+                      "sha256":  "9afb6462391b101d0621cacc345b7edfdbd514aca6a636322561882ef2a7a7f2"
+                  }
+              ]
+}

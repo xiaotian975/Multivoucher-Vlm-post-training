@@ -1,0 +1,18 @@
+{
+  "total_cases": 250,
+  "json_validity": 1.0,
+  "schema_compliance": 0.764,
+  "field_em": 0.7634,
+  "consistency_em": 0.748,
+  "risk_type_macro_f1": 0.6969710471675414,
+  "audit_accuracy": 0.644,
+  "high_risk_miss_rate": 0.39204545454545453,
+  "false_manual_review_rate": 0.0,
+  "evidence_support_rate": 0.7586206896551724,
+  "evidence_value_accuracy": 0.7597330367074527,
+  "evidence_source_accuracy": 0.7591768631813126,
+  "evidence_bbox_accuracy_strict": 0.7486095661846496,
+  "evidence_bbox_accuracy_relaxed": 0.7502780867630701,
+  "hallucination_rate": 0.026409707351891507,
+  "error_cases": 133
+}

@@ -1,0 +1,90 @@
+﻿{
+    "experiment":  "final_holdout_v1_repair_sft_r3",
+    "model_id":  "repair_sft_r3",
+    "protocol":  "final_holdout_v1",
+    "scope":  "consumed_final_holdout_diagnosis_only",
+    "metrics_summary":  "outputs/eval_reports/final_holdout_v1/repair_sft_r3/metrics_summary.csv",
+    "predictions_dir":  "outputs/predictions/final_holdout_v1/repair_sft_r3",
+    "files":  [
+                  {
+                      "path":  "docs/experiments/final_holdout_v1/error_attribution_summary.json",
+                      "bytes":  3085,
+                      "sha256":  "e1eff93d7cd33cbb3aa31971d33b4d48765d03c21648146d3afd3427017d0d5c"
+                  },
+                  {
+                      "path":  "docs/experiments/final_holdout_v1/final_holdout_result.json",
+                      "bytes":  8329,
+                      "sha256":  "312e05c594f2f3cc2fb9def12fde9d4783d65b83e0678fddce455987ec5261ec"
+                  },
+                  {
+                      "path":  "docs/experiments/final_holdout_v1/summary.md",
+                      "bytes":  1184,
+                      "sha256":  "60268a46f7e67bc69b69a96ea80d1029c41d4c47d51db7d8dd79008065307af0"
+                  },
+                  {
+                      "path":  "outputs/eval_reports/final_holdout_v1/repair_sft_r3/metrics_summary.csv",
+                      "bytes":  880,
+                      "sha256":  "de355d12c833f0a92c73a1e0f02451c29f1865afe2d5ce48fcb182b19622728e"
+                  },
+                  {
+                      "path":  "outputs/eval_reports/final_holdout_v1/repair_sft_r3/repair_sft_r3_test_clean_errors.jsonl",
+                      "bytes":  36497,
+                      "sha256":  "42071612ecfc27aa1bd15e135d0be4ea10f4502c821e6e85d8d314af2c77c6e9"
+                  },
+                  {
+                      "path":  "outputs/eval_reports/final_holdout_v1/repair_sft_r3/repair_sft_r3_test_clean_metrics.json",
+                      "bytes":  602,
+                      "sha256":  "f0c37905fe8d7d26371c392bb82df87207bca27e849cc39fb270c92975f911dd"
+                  },
+                  {
+                      "path":  "outputs/eval_reports/final_holdout_v1/repair_sft_r3/repair_sft_r3_test_hard_negative_errors.jsonl",
+                      "bytes":  25747,
+                      "sha256":  "f9637c28ed2013d58c5e75465f3435ce5d321b2c9400a1ed969a76cbf6270654"
+                  },
+                  {
+                      "path":  "outputs/eval_reports/final_holdout_v1/repair_sft_r3/repair_sft_r3_test_hard_negative_metrics.json",
+                      "bytes":  603,
+                      "sha256":  "25bb4a515e07f841eec5838d0762bfebcf61ebf14a47ed4fea8daffbfe0f403f"
+                  },
+                  {
+                      "path":  "outputs/eval_reports/final_holdout_v1/repair_sft_r3/repair_sft_r3_test_robust_errors.jsonl",
+                      "bytes":  32993,
+                      "sha256":  "81efe38a442ac3464d2d8046c2c3b3b4bff2eb1bf01943f0f42009fe97ec82a0"
+                  },
+                  {
+                      "path":  "outputs/eval_reports/final_holdout_v1/repair_sft_r3/repair_sft_r3_test_robust_metrics.json",
+                      "bytes":  604,
+                      "sha256":  "d970ca0bd407cc7c95809e86b54ac6fd61fa17c89290f34772f70f394a7a0e9c"
+                  },
+                  {
+                      "path":  "outputs/eval_reports/final_holdout_v1/repair_sft_r3/repair_sft_r3_test_unseen_template_errors.jsonl",
+                      "bytes":  41053,
+                      "sha256":  "4601eb0165bcfb25d59792de0252bb391028ecbe4ca349669a99920864c09d05"
+                  },
+                  {
+                      "path":  "outputs/eval_reports/final_holdout_v1/repair_sft_r3/repair_sft_r3_test_unseen_template_metrics.json",
+                      "bytes":  605,
+                      "sha256":  "ef88e10fc2591ffa5c57fb1c18d5a6f9ea075adc770bbd9369ed0d92234c1285"
+                  },
+                  {
+                      "path":  "outputs/predictions/final_holdout_v1/repair_sft_r3/test_clean.jsonl",
+                      "bytes":  1014385,
+                      "sha256":  "eb177c8a14652fb14d67100da7d1bbde7b8d7fa0ced195d68dbdf6c7afeda57f"
+                  },
+                  {
+                      "path":  "outputs/predictions/final_holdout_v1/repair_sft_r3/test_hard_negative.jsonl",
+                      "bytes":  1022398,
+                      "sha256":  "8cea10060e27e5a3c0cb8ed2b9ecc0d0a28de685a5796e767f95233503b03902"
+                  },
+                  {
+                      "path":  "outputs/predictions/final_holdout_v1/repair_sft_r3/test_robust.jsonl",
+                      "bytes":  1040333,
+                      "sha256":  "6b5212f6b2dc6374880688ed2ef1bf1ed0cf9ca4cd4a1aca45d796c8c07876e3"
+                  },
+                  {
+                      "path":  "outputs/predictions/final_holdout_v1/repair_sft_r3/test_unseen_template.jsonl",
+                      "bytes":  1038885,
+                      "sha256":  "374cafa0624cc849f4a8f98ada76b353c3945658019d1fc1feeba2d13dfff54c"
+                  }
+              ]
+}

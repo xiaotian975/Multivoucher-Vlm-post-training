@@ -1,0 +1,6 @@
+dataset_sha256=098501ddb8804d2968b012c9a6db402af981f4d6aa6e9df14af297b2a68d85b1
+case_ids_sha256=e2ca1f5adb2aa4e2ea66b9e1c611d6270e487aabd583ed7ba31ef4f2f80e617e
+creation_timestamp=2026-08-20T15:01:30+00:00
+git_commit=b6da269ccda7bda27912fe1ae3375857947649d0
+num_cases=1000
+target_per_split=250

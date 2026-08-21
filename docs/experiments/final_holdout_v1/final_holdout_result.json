@@ -1,0 +1,255 @@
+{
+  "created_at": "2026-08-21T12:40:26+00:00",
+  "manifest": {
+    "name": "final_holdout_v1",
+    "created_at": "2026-08-20T15:01:30+00:00",
+    "seed": 42,
+    "num_cases": 1000,
+    "target_per_split": 250,
+    "split_counts": {
+      "test_clean": 250,
+      "test_robust": 250,
+      "test_unseen_template": 250,
+      "test_hard_negative": 250
+    },
+    "dataset_sha256": "098501ddb8804d2968b012c9a6db402af981f4d6aa6e9df14af297b2a68d85b1",
+    "case_ids_sha256": "e2ca1f5adb2aa4e2ea66b9e1c611d6270e487aabd583ed7ba31ef4f2f80e617e",
+    "used_test_case_ids_sha256": "da5c14760dc7101c600d70b15afc527b791318b15927cfdfcbad4fa9a8fee7cd",
+    "overlap_counts": {
+      "dpo_v2_holdout": 0,
+      "dpo_v2_train_decode_dev": 0,
+      "repair_sft_train": 0,
+      "model_mining": 0,
+      "used_test": 0
+    },
+    "model_lock": {
+      "model_id": "repair_sft_r3",
+      "role": "PRODUCTION_CANDIDATE",
+      "adapter_remote_path": "outputs/checkpoints/sft/qwen3vl_8b_high_risk_repair_r3_order_id_structured_from_r2",
+      "adapter_local_path": "outputs/model_candidates/repair_sft_r3/outputs/checkpoints/sft/qwen3vl_8b_high_risk_repair_r3_order_id_structured_from_r2",
+      "adapter_sha256": "2cf2bbdc7cc507eb4833332900ee516e2cc40792d17576714ef0a11591ac5fe2",
+      "adapter_archive_status": "ARCHIVED_AND_VERIFIED",
+      "selection_source": "docs\\experiments\\phase10_model_error_mined_dpo_v3\\model_selection.json",
+      "locked_at": "2026-08-20T15:01:30+00:00",
+      "git_commit": "b6da269ccda7bda27912fe1ae3375857947649d0"
+    },
+    "distribution": {
+      "split": {
+        "test_clean": 250,
+        "test_hard_negative": 250,
+        "test_robust": 250,
+        "test_unseen_template": 250
+      },
+      "primary_anomaly_type": {
+        "amount_mismatch": 138,
+        "applicant_mismatch": 138,
+        "date_mismatch": 75,
+        "duplicate_in_batch": 75,
+        "merchant_mismatch": 137,
+        "missing_document": 75,
+        "none": 75,
+        "order_id_mismatch": 137,
+        "over_reimbursement": 75,
+        "unreadable_image": 75
+      },
+      "risk_level": {
+        "high": 736,
+        "low": 75,
+        "medium": 189
+      },
+      "audit_result": {
+        "manual_review": 219,
+        "missing_info": 75,
+        "pass": 75,
+        "reject_recommendation": 631
+      }
+    }
+  },
+  "split_metrics": [
+    {
+      "model_id": "repair_sft_r3",
+      "split": "test_clean",
+      "total_cases": "250",
+      "json_validity": "1.0",
+      "schema_compliance": "0.82",
+      "field_em": "0.8196",
+      "risk_type_macro_f1": "0.7482123155505978",
+      "audit_accuracy": "0.704",
+      "high_risk_miss_rate": "0.3391812865497076",
+      "false_manual_review_rate": "0.0",
+      "evidence_support_rate": "0.8235622557230597",
+      "hallucination_rate": "0.02511566424322538",
+      "evidence_bbox_accuracy_relaxed": "0.8135120044667783",
+      "error_cases": "122"
+    },
+    {
+      "model_id": "repair_sft_r3",
+      "split": "test_robust",
+      "total_cases": "250",
+      "json_validity": "1.0",
+      "schema_compliance": "0.856",
+      "field_em": "0.8556",
+      "risk_type_macro_f1": "0.7593614022185452",
+      "audit_accuracy": "0.736",
+      "high_risk_miss_rate": "0.28402366863905326",
+      "false_manual_review_rate": "0.0",
+      "evidence_support_rate": "0.8598442714126807",
+      "hallucination_rate": "0.027672955974842768",
+      "evidence_bbox_accuracy_relaxed": "0.8592880978865406",
+      "error_cases": "111"
+    },
+    {
+      "model_id": "repair_sft_r3",
+      "split": "test_unseen_template",
+      "total_cases": "250",
+      "json_validity": "1.0",
+      "schema_compliance": "0.764",
+      "field_em": "0.7634",
+      "risk_type_macro_f1": "0.6969710471675414",
+      "audit_accuracy": "0.644",
+      "high_risk_miss_rate": "0.39204545454545453",
+      "false_manual_review_rate": "0.0",
+      "evidence_support_rate": "0.7586206896551724",
+      "hallucination_rate": "0.026409707351891507",
+      "evidence_bbox_accuracy_relaxed": "0.7502780867630701",
+      "error_cases": "133"
+    },
+    {
+      "model_id": "repair_sft_r3",
+      "split": "test_hard_negative",
+      "total_cases": "250",
+      "json_validity": "1.0",
+      "schema_compliance": "0.944",
+      "field_em": "0.943",
+      "risk_type_macro_f1": "0.6143848248002107",
+      "audit_accuracy": "0.78",
+      "high_risk_miss_rate": "0.24545454545454545",
+      "false_manual_review_rate": "0.0",
+      "evidence_support_rate": "0.9013429752066116",
+      "hallucination_rate": "0.009085746734809767",
+      "evidence_bbox_accuracy_relaxed": "0.8930785123966942",
+      "error_cases": "88"
+    }
+  ],
+  "aggregate": {
+    "total_cases": 1000,
+    "json_validity": 1.0,
+    "schema_compliance": 0.846,
+    "audit_accuracy": 0.716,
+    "high_risk_miss_rate": 0.3151762387971902,
+    "evidence_support_rate": 0.8358425479993811,
+    "error_cases": 454
+  },
+  "error_attribution": {
+    "per_split": {
+      "test_clean": {
+        "error_file": "outputs\\eval_reports\\final_holdout_v1\\repair_sft_r3\\repair_sft_r3_test_clean_errors.jsonl",
+        "error_rows": 122
+      },
+      "test_robust": {
+        "error_file": "outputs\\eval_reports\\final_holdout_v1\\repair_sft_r3\\repair_sft_r3_test_robust_errors.jsonl",
+        "error_rows": 111
+      },
+      "test_unseen_template": {
+        "error_file": "outputs\\eval_reports\\final_holdout_v1\\repair_sft_r3\\repair_sft_r3_test_unseen_template_errors.jsonl",
+        "error_rows": 133
+      },
+      "test_hard_negative": {
+        "error_file": "outputs\\eval_reports\\final_holdout_v1\\repair_sft_r3\\repair_sft_r3_test_hard_negative_errors.jsonl",
+        "error_rows": 88
+      }
+    },
+    "issue_counts": {
+      "bbox_strict_error": 192,
+      "schema_invalid": 154,
+      "business_metrics_zeroed": 154,
+      "audit_mismatch": 130,
+      "high_risk_miss": 118,
+      "unsupported_evidence": 116,
+      "hallucination": 115
+    },
+    "problem_class_counts": {
+      "evidence_not_trustworthy": 287,
+      "model_missed_high_risk": 229,
+      "schema_contract_failure": 154,
+      "decision_or_risk_mismatch": 130
+    },
+    "truth_to_pred_risk_counts": {
+      "high -> low": 114,
+      "high -> None": 111,
+      "high -> high": 108,
+      "medium -> medium": 42,
+      "medium -> None": 30,
+      "low -> low": 19,
+      "low -> None": 13,
+      "medium -> high": 11,
+      "high -> medium": 4,
+      "medium -> low": 2
+    },
+    "truth_to_pred_audit_counts": {
+      "reject_recommendation -> pass": 114,
+      "reject_recommendation -> reject_recommendation": 82,
+      "manual_review -> manual_review": 68,
+      "missing_info -> None": 67,
+      "reject_recommendation -> None": 59,
+      "pass -> pass": 19,
+      "manual_review -> None": 15,
+      "pass -> None": 13,
+      "manual_review -> reject_recommendation": 11,
+      "reject_recommendation -> manual_review": 3,
+      "manual_review -> pass": 2,
+      "missing_info -> missing_info": 1
+    },
+    "examples_by_problem_class": {
+      "schema_contract_failure": [
+        "MV_MAIN_015604",
+        "MV_MAIN_009134",
+        "MV_MAIN_038436",
+        "MV_MAIN_008137",
+        "MV_MAIN_011799",
+        "MV_MAIN_000975",
+        "MV_MAIN_000448",
+        "MV_MAIN_018447",
+        "MV_MAIN_027646",
+        "MV_MAIN_004541"
+      ],
+      "model_missed_high_risk": [
+        "MV_MAIN_015604",
+        "MV_MAIN_009134",
+        "MV_MAIN_005376",
+        "MV_MAIN_038436",
+        "MV_MAIN_008137",
+        "MV_MAIN_027947",
+        "MV_MAIN_000448",
+        "MV_MAIN_018447",
+        "MV_MAIN_027646",
+        "MV_MAIN_031752"
+      ],
+      "evidence_not_trustworthy": [
+        "MV_MAIN_032781",
+        "MV_MAIN_032982",
+        "MV_MAIN_034847",
+        "MV_MAIN_005376",
+        "MV_MAIN_040543",
+        "MV_MAIN_005380",
+        "MV_MAIN_017551",
+        "MV_MAIN_017555",
+        "MV_MAIN_027947",
+        "MV_MAIN_031752"
+      ],
+      "decision_or_risk_mismatch": [
+        "MV_MAIN_005376",
+        "MV_MAIN_027947",
+        "MV_MAIN_031752",
+        "MV_MAIN_031364",
+        "MV_MAIN_026889",
+        "MV_MAIN_038875",
+        "MV_MAIN_020005",
+        "MV_MAIN_027673",
+        "MV_MAIN_018697",
+        "MV_MAIN_038092"
+      ]
+    }
+  },
+  "policy": "Final holdout consumed. Do not use these results to continue training or retune model selection."
+}

@@ -1,11 +1,21 @@
 {
   "schema_version": "1.0",
   "selection_date": "2026-08-20",
-  "selection_scope": "train_only_development_gate",
-  "final_holdout_completed": false,
+  "selection_scope": "train_only_development_gate_plus_post_failure_diagnostics",
+  "final_holdout_completed": true,
+  "final_holdout_status": "FINAL_HOLDOUT_FAILED",
+  "final_holdout_v1": {
+    "cases": 1000,
+    "audit_accuracy": 0.716,
+    "high_risk_miss_rate": 0.3152,
+    "schema_compliance": 0.846,
+    "evidence_support_rate": 0.8358,
+    "error_cases": 454,
+    "policy": "CONSUMED_DIAGNOSIS_ONLY"
+  },
   "production_candidate": {
     "model_id": "repair_sft_r3",
-    "role": "PRODUCTION_CANDIDATE",
+    "role": "FINAL_HOLDOUT_FAILED",
     "deployment_status": "NOT_DEPLOYED",
     "adapter_remote_path": "outputs/checkpoints/sft/qwen3vl_8b_high_risk_repair_r3_order_id_structured_from_r2",
     "adapter_local_archive": "outputs/model_candidates/repair_sft_r3/repair_sft_r3_production_candidate.tar",
@@ -23,7 +33,19 @@
       "json_validity": 1.0,
       "schema_compliance": 1.0
     },
-    "metrics_source": "outputs/remote_artifacts/model_mined_dpo_v3/20260816_173434/outputs/runtime/model_mined_dpo_v3/20260816_173434/eval/sft_v3/metrics.json"
+    "metrics_source": "outputs/remote_artifacts/model_mined_dpo_v3/20260816_173434/outputs/runtime/model_mined_dpo_v3/20260816_173434/eval/sft_v3/metrics.json",
+    "sample500_diagnostic": {
+      "benchmark": "sample500_four_split_average_historical_protocol",
+      "cases": 2000,
+      "audit_accuracy": 0.6074999999999999,
+      "high_risk_miss_rate": 0.4216600855751326,
+      "evidence_support_rate": 0.6801098597206774,
+      "json_validity": 1.0,
+      "schema_compliance": 0.7270000000000001,
+      "error_cases_avg": 263.75,
+      "source": "docs/experiments/repair_sft_r3_sample500_diagnostic/metrics_by_model.csv",
+      "policy": "DIAGNOSTIC_AFTER_FINAL_FAILURE"
+    }
   },
   "alignment_research_candidate": {
     "model_id": "dpo_v3_model_mined_strong_checkpoint15",
@@ -57,6 +79,7 @@
   },
   "data_policy": {
     "sample500_used_for_phase10_selection": false,
+    "sample500_repair_sft_r3_used_for_post_failure_diagnosis": true,
     "test_used_for_phase10_selection": false,
     "train_decode_dev_used_for_fast_gate": true
   },

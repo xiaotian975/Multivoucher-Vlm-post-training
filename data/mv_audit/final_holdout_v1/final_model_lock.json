@@ -1,0 +1,11 @@
+{
+  "model_id": "repair_sft_r3",
+  "role": "PRODUCTION_CANDIDATE",
+  "adapter_remote_path": "outputs/checkpoints/sft/qwen3vl_8b_high_risk_repair_r3_order_id_structured_from_r2",
+  "adapter_local_path": "outputs/model_candidates/repair_sft_r3/outputs/checkpoints/sft/qwen3vl_8b_high_risk_repair_r3_order_id_structured_from_r2",
+  "adapter_sha256": "2cf2bbdc7cc507eb4833332900ee516e2cc40792d17576714ef0a11591ac5fe2",
+  "adapter_archive_status": "ARCHIVED_AND_VERIFIED",
+  "selection_source": "docs\\experiments\\phase10_model_error_mined_dpo_v3\\model_selection.json",
+  "locked_at": "2026-08-20T15:01:30+00:00",
+  "git_commit": "b6da269ccda7bda27912fe1ae3375857947649d0"
+}

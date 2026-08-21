@@ -121,6 +121,27 @@ def _metric_rows(root: Path, artifact_root: Path, sft_run: str, full_run: str) -
                 "source": "docs/experiments/phase08_m3v2_sample500/metrics_by_model.csv",
             }
         )
+    diagnostic_path = root / "docs/experiments/repair_sft_r3_sample500_diagnostic/metrics_by_model.csv"
+    if diagnostic_path.exists():
+        diagnostic = {row["model_id"]: row for row in _read_csv(diagnostic_path)}
+        source = diagnostic["repair_sft_r3"]
+        rows.append(
+            {
+                "benchmark_group": "sample500",
+                "evaluation_protocol": "four_split_average_500_per_split_historical",
+                "model_id": "repair_sft_r3",
+                "method": "Structured Repair SFT v3",
+                "cases": "4x500",
+                "json_validity": source["json_validity"],
+                "schema_compliance": source["schema_compliance"],
+                "audit_accuracy": source["audit_accuracy"],
+                "high_risk_miss_rate": source["high_risk_miss_rate"],
+                "evidence_support_rate": source["evidence_support_rate"],
+                "error_cases": source["error_cases"],
+                "selection_role": "DIAGNOSTIC_AFTER_FINAL_FAILURE",
+                "source": "docs/experiments/repair_sft_r3_sample500_diagnostic/metrics_by_model.csv",
+            }
+        )
     for model_id, method, role, metrics, source in [
         (
             "repair_sft_r3",

@@ -1,0 +1,65 @@
+{
+  "name": "final_holdout_v1",
+  "created_at": "2026-08-20T15:01:30+00:00",
+  "seed": 42,
+  "num_cases": 1000,
+  "target_per_split": 250,
+  "split_counts": {
+    "test_clean": 250,
+    "test_robust": 250,
+    "test_unseen_template": 250,
+    "test_hard_negative": 250
+  },
+  "dataset_sha256": "098501ddb8804d2968b012c9a6db402af981f4d6aa6e9df14af297b2a68d85b1",
+  "case_ids_sha256": "e2ca1f5adb2aa4e2ea66b9e1c611d6270e487aabd583ed7ba31ef4f2f80e617e",
+  "used_test_case_ids_sha256": "da5c14760dc7101c600d70b15afc527b791318b15927cfdfcbad4fa9a8fee7cd",
+  "overlap_counts": {
+    "dpo_v2_holdout": 0,
+    "dpo_v2_train_decode_dev": 0,
+    "repair_sft_train": 0,
+    "model_mining": 0,
+    "used_test": 0
+  },
+  "model_lock": {
+    "model_id": "repair_sft_r3",
+    "role": "PRODUCTION_CANDIDATE",
+    "adapter_remote_path": "outputs/checkpoints/sft/qwen3vl_8b_high_risk_repair_r3_order_id_structured_from_r2",
+    "adapter_local_path": "outputs/model_candidates/repair_sft_r3/outputs/checkpoints/sft/qwen3vl_8b_high_risk_repair_r3_order_id_structured_from_r2",
+    "adapter_sha256": "2cf2bbdc7cc507eb4833332900ee516e2cc40792d17576714ef0a11591ac5fe2",
+    "adapter_archive_status": "ARCHIVED_AND_VERIFIED",
+    "selection_source": "docs\\experiments\\phase10_model_error_mined_dpo_v3\\model_selection.json",
+    "locked_at": "2026-08-20T15:01:30+00:00",
+    "git_commit": "b6da269ccda7bda27912fe1ae3375857947649d0"
+  },
+  "distribution": {
+    "split": {
+      "test_clean": 250,
+      "test_hard_negative": 250,
+      "test_robust": 250,
+      "test_unseen_template": 250
+    },
+    "primary_anomaly_type": {
+      "amount_mismatch": 138,
+      "applicant_mismatch": 138,
+      "date_mismatch": 75,
+      "duplicate_in_batch": 75,
+      "merchant_mismatch": 137,
+      "missing_document": 75,
+      "none": 75,
+      "order_id_mismatch": 137,
+      "over_reimbursement": 75,
+      "unreadable_image": 75
+    },
+    "risk_level": {
+      "high": 736,
+      "low": 75,
+      "medium": 189
+    },
+    "audit_result": {
+      "manual_review": 219,
+      "missing_info": 75,
+      "pass": 75,
+      "reject_recommendation": 631
+    }
+  }
+}

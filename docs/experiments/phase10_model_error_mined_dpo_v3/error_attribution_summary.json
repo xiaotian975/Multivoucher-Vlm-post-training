@@ -32,9 +32,9 @@
   ],
   "candidate_issue_counts": {
     "bbox_strict_error": 23,
+    "unsupported_evidence": 5,
     "audit_mismatch": 20,
     "high_risk_miss": 12,
-    "unsupported_evidence": 5,
     "hallucination": 1
   },
   "audit_transition_counts": {
